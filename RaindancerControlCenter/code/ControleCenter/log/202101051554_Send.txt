@@ -1,0 +1,8 @@
+
+Help
+Auto
+Manual
+History
+Error
+Reset
+

@@ -1,0 +1,3 @@
+red #FFFF0101
+blue #FF2D4BB0
+pink #FFA570B0
