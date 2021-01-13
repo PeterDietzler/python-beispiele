@@ -178,6 +178,7 @@ class ConsolPage(tk.Frame):
         self.txtSend.insert(tk.END, 'Auto\n')
         self.txtSend.insert(tk.END, 'Manual\n')
         self.txtSend.insert(tk.END, 'History\n')
+        self.txtSend.insert(tk.END, 'Bat\n')
         self.txtSend.insert(tk.END, 'Error\n')
         self.txtSend.insert(tk.END, 'Reset\n')
 
