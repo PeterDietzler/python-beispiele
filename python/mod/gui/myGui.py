@@ -38,7 +38,8 @@ def openGUI():
     app = QApplication(sys.argv)
     print("OpenGUI()")
     w = Fenster()
-    sys.exit(app.exec_())
+    #sys.exit(app.exec_())
+    app.exec_()
 
 
 def openStuff2():
@@ -51,9 +52,10 @@ def openStuff2():
     w = QWidget()
     w.setGeometry(50,50,500,500)
     w.setWindowTitle('Simple')
-    w.setWindowIcon(QIcon("email.png"))
+    w.setWindowIcon(QIcon("pic.png"))
     w.show()
-    sys.exit(app.exec_())
+    #sys.exit(app.exec_())
+    app.exec_()
 
 
 
