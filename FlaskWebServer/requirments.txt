@@ -1,0 +1,4 @@
+
+
+Fask==1.1.2
+Flask-RESTful==0.308
