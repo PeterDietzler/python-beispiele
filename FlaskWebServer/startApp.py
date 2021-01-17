@@ -11,7 +11,7 @@ app = Flask(__name__)
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return render_template("index1.html")
 
 @app.route("/dirs")
 def show_dirs():
@@ -24,7 +24,7 @@ def templates():
     name = request.args.get("name")
     g = giphypop.Giphy()
     gif = g.random_gif(tag=name)
-    return render_template("index2.html",user_name=name, gif_link = gif.media_url ) 
+    return render_template("index1.html",user_name=name, gif_link = gif.media_url ) 
 
 
 
