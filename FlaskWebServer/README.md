@@ -1,22 +1,19 @@
-# python-beispile
-
+# FlaskWebServer
 
 # Wofür?
 Das ist eine Samlung von Python -Beispielen
 
-## Inhalt
+# Verweise
+		
+		Video Anleitung zu den Quellen
+		
+		https://www.youtube.com/watch?v=C7_jHYTKUbc
 
-- FlaskWebSever
-- RaindancerControlCenter
-- Shelly
+## Installation
 		
-		http Abfrage bei einem Shelly Gerät
+		python setup.sh   zum installieren der Pakete
 		
-		parsen der JSON Botschaft nach Section:{ "Key": "Value"}
+		python start.py   Zum Starten des Servers
 		
+		Http://127.0.0.1:5000	zun aufrufen der Startseite
 
-- python-PlotGraph
-	
-		PyQt5 Beispiel mit mathplotlib
-	
-		https://learndataanalysis.org/embed-matplotlib-graph-in-a-pyqt5-application/
