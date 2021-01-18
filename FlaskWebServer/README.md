@@ -11,9 +11,15 @@ Das ist eine Samlung von Python -Beispielen
 
 ## Installation
 		
-		python setup.sh   zum installieren der Pakete
+		python setup.sh   Zum installieren der Pakete
 		
 		python start.py   Zum Starten des Servers
 		
-		Http://127.0.0.1:5000	zun aufrufen der Startseite
+		http://127.0.0.1:5000	Zum aufrufen der Webserver Startseite
+		
+		
+		http://127.0.0.1:5000/dirs?dir=/	zum Abfragen des Directory inhaltes
+		
+		http://127.0.0.1:5000/dirs?dir=/etc	zum Abfragen des Dierectory inhaltes
+		
 
