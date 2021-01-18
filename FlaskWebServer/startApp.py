@@ -11,8 +11,12 @@ app = Flask(__name__)
 
 @app.route("/")
 def index():
-    return render_template("index1.html")
+    return render_template("index.html")
 
+
+
+# http://127.0.0.1:5000/dirs?dir=/   -> grundverzeichnis
+# http://127.0.0.1:5000/dirs?dir=/TestIOBase zeigt inhalt von c:/TestIOBase 
 @app.route("/dirs")
 def show_dirs():
     dir = request.args.get("dir")

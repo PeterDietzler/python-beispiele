@@ -3,4 +3,4 @@
 from os import system
 
 
-system( "pit3 install -r requirment.txt")
+system( "pip3 install -r requirments.txt")
