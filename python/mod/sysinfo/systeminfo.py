@@ -100,3 +100,10 @@ def netinfo():
     #print(f"Total Bytes Received: {adjust_size(net_io.bytes_recv)}")
 
 
+if __name__ == '__main__':
+	systeminfo()
+	boottime()
+	cpuinfo()
+	gpuinfo()
+	netinfo()
+
