@@ -1,10 +1,14 @@
 import cv2, numpy, pyautogui, keyboard
 
+
 filename = "record"
+
 SCREEN_SIZE = (1920, 1200)
+
 vid = cv2.VideoWriter(filename + ".mp4", cv2.VideoWriter_fourcc(*'mp4v'), 20.0, (SCREEN_SIZE))
 
-print("Starte Aufnahme")
+print("Starte Aufnahme ( Hauptbildschirm ).....Press x to Stop recording")
+
 while True:
     img = pyautogui.screenshot()
     numpy_frame = numpy.array(img)
