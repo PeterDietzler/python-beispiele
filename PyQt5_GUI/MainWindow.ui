@@ -17,14 +17,14 @@
    <widget class="QTabWidget" name="tabWidget">
     <property name="geometry">
      <rect>
-      <x>20</x>
-      <y>30</y>
+      <x>10</x>
+      <y>40</y>
       <width>771</width>
       <height>531</height>
      </rect>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>2</number>
     </property>
     <widget class="QWidget" name="LoggingTab">
      <attribute name="title">
@@ -53,14 +53,63 @@
      <widget class="QListView" name="listView">
       <property name="geometry">
        <rect>
-        <x>90</x>
+        <x>240</x>
         <y>50</y>
         <width>441</width>
-        <height>331</height>
+        <height>121</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="pushButtonOpenCam">
+      <property name="geometry">
+       <rect>
+        <x>50</x>
+        <y>130</y>
+        <width>90</width>
+        <height>28</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>openCam</string>
+      </property>
+     </widget>
+     <widget class="QGraphicsView" name="graphicsView">
+      <property name="geometry">
+       <rect>
+        <x>240</x>
+        <y>190</y>
+        <width>391</width>
+        <height>281</height>
        </rect>
       </property>
      </widget>
     </widget>
+   </widget>
+   <widget class="QPushButton" name="pushButtonStart">
+    <property name="geometry">
+     <rect>
+      <x>40</x>
+      <y>600</y>
+      <width>90</width>
+      <height>28</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Start</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButtonEnde">
+    <property name="geometry">
+     <rect>
+      <x>210</x>
+      <y>610</y>
+      <width>90</width>
+      <height>28</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>ENDE</string>
+    </property>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">

@@ -24,11 +24,11 @@ import frame_draw
 camera_id = 0
 print( "Camera_id :", camera_id )
 
-if len(sys.argv) > 1:
-	camera_id = sys.argv[1]
-	if camera_id.isdigit():
-		camera_id = int(camera_id)
-		print( "argv Camera_id :", camera_id )
+#if len(sys.argv) > 1:
+#	camera_id = sys.argv[1]
+#	if camera_id.isdigit():#
+#		camera_id = int(camera_id)
+#		print( "argv Camera_id :", camera_id )
 
 # camera thread setup
 camera = frame_capture.Camera_Thread()
