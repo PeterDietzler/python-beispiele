@@ -1,11 +1,22 @@
 from os import system
 from ctypes import *
+import platform
 
 
-system("gcc -shared -o testdll.so -fPIC testdll.c")
+
+uname = platform.uname()
+print(f"System: {uname.system}")
 
 
-p = cdll.LoadLibrary("./testdll.so")
+if uname.system == "Linux":
+    system("gcc -shared -o testdll.so -fPIC testdll.c")
+    p = cdll.LoadLibrary("./testdll.so")
+
+if uname.system == "Windows":
+    system("g++ -shared -o testdll.dll -fPIC testdll.c")
+    p = cdll.LoadLibrary("./testdll.dll")
+
+
 
 p.connect()
 
