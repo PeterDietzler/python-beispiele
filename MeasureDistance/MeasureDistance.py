@@ -31,7 +31,7 @@ def run():
 
         # cameras variables
         left_camera_source = 1
-        right_camera_source = 2
+        right_camera_source = 0
         pixel_width = 640
         pixel_height = 480
         angle_width = 78
@@ -954,5 +954,5 @@ if __name__ == '__main__':
 # ------------------------------
     
 
-targeting_tools.py
-"targeting_tools.py" wird angezeigt.
+#targeting_tools.py
+#"targeting_tools.py" wird angezeigt.

@@ -25,10 +25,10 @@ camera_id = 0
 print( "Camera_id :", camera_id )
 
 #if len(sys.argv) > 1:
-#	camera_id = sys.argv[1]
-#	if camera_id.isdigit():#
-#		camera_id = int(camera_id)
-#		print( "argv Camera_id :", camera_id )
+#   camera_id = sys.argv[1]
+#   if camera_id.isdigit():#
+#       camera_id = int(camera_id)
+#       print( "argv Camera_id :", camera_id )
 
 # camera thread setup
 camera = frame_capture.Camera_Thread()
@@ -459,7 +459,8 @@ while 1:
     #-------------------------------
     elif key_flags['auto']:
         
-        mouse_mark = None
+        #mouse_mark = None
+        mouse_mark = True
 
         # auto text data
         text.append('')
@@ -486,10 +487,13 @@ while 1:
         
         # small crosshairs (after getting frame1)
         draw.crosshairs(frame0,5,weight=2,color='green')    
-    
+
+ 
+
+
         # loop over the contours
         for c in contours:
-
+            print(c)
             # contour data (from top left)
             x1,y1,w,h = cv2.boundingRect(c)
             x2,y2 = x1+w,y1+h
@@ -518,6 +522,11 @@ while 1:
 
             # plot
             draw.rect(frame0,x1,y1,x2,y2,weight=2,color='red')
+
+            # mouse cursor lines
+            draw.vline(frame0,mouse_raw[0],weight=1,color='green')
+            draw.hline(frame0,mouse_raw[1],weight=1,color='green')
+       
 
             # add dimensions
             draw.add_text(frame0,f'{xlen:.2f}',x1-((x1-x2)/2),min(y1,y2)-8,center=True,color='red')
