@@ -86,7 +86,7 @@ class Camera_Thread:
             self.buffer = queue.Queue(1)
 
         # camera setup
-        self.camera = cv2.VideoCapture(self.camera_source)
+        self.camera = cv2.VideoCapture(self.camera_source, cv2.CAP_DSHOW)
         self.camera.set(3,self.camera_width)
         self.camera.set(4,self.camera_height)
         self.camera.set(5,self.camera_frame_rate)
@@ -212,8 +212,8 @@ class Camera_Thread:
             frame = self.buffer.get(timeout=wait)
             self.frames_returned += 1
         except queue.Empty:
-            #print('Queue Empty!')
-            #print(traceback.format_exc())
+            print('Queue Empty!')
+            print(traceback.format_exc())
             pass
 
         # done

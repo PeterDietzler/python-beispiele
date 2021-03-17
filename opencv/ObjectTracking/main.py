@@ -1,16 +1,54 @@
 import cv2
+import frame_draw
 
-cap = cv2.VideoCapture(0)
+# camera setup
+camera_source = 0
+camera_width, camera_height = 1920,1080
+#camera_frame_rate = 30
+#camera_fourcc = cv2.VideoWriter_fourcc(*"MJPG")
+
+
+cap = cv2.VideoCapture(camera_source, cv2.CAP_DSHOW)
+cap.set(3,camera_width)
+cap.set(4,camera_height)
+#cap.set(5,camera_frame_rate)
+#cap.set(6,camera_fourcc)
+
+
+#-------------------------------
+# frame drawing/text module 
+#-------------------------------
+
+draw = frame_draw.DRAW()
+draw.width = camera_width
+draw.height = camera_height
+
+
+width = cap.get(3)
+height= cap.get(4)
+frate = cap.get(5)
+
+
+print('CAMERA:',"id:",camera_source, " Breite:",width,"px Höhe:",height,"px Fps:",frate)
+
+
+
+
 
 while True:
+    
+    text = []
+    #text.append(f'CAMERA: {camera_source} {width}x{height} {frate}FPS')
+    text.append(f'LAST CLICK: NONE')
+    
     #1. read frame
     ret, frame0 = cap.read()
     #height, width, _ = frame.shape
-
+    frame1 = cv2.rotate(frame0, cv2.ROTATE_180)
     # 2. Extract Region of interest
     x1,y1   = 0, 0
-    x2,y2 = 500, 450
-    roi_frame = frame0[y1: y2, x1: x2]
+    x2,y2 = camera_width, camera_height-200
+    roi_frame = frame1[y1: y2, x1: x2]
 
     # 3. convert to gray frame
     gray_frame = cv2.cvtColor( roi_frame,cv2.COLOR_BGR2GRAY)
@@ -30,21 +68,15 @@ while True:
         #print(area)
         if 150 < area < 3500:
             #print(area)
-            cv2.drawContours( roi_frame, [cnt], -1, (255, 0, 0), 1)          #blau     
+            cv2.drawContours( roi_frame, [cnt], -1, (0, 255, 0), 1)          #grün     
             cv2.rectangle(roi_frame, (x, y), (x + w, y + h), (255, 0, 0), 1)
             pass
-        elif  3500 < area < 7000:          
-            #print(area)
-            cv2.rectangle(roi_frame, (x, y), (x + w, y + h), (0, 255, 0), 1) #grün
-            cv2.drawContours( roi_frame, [cnt], -1, (0, 255, 0), 1)
-            pass
-        elif  area > 7000:          
-            cv2.rectangle(roi_frame, (x, y), (x + w, y + h), (0, 0, 255), 1)  #Rot
-            cv2.drawContours( roi_frame, [cnt], -1, (0, 0, 255), 1)
-            pass
-   
-   
-   
+
+    
+    
+    
+    draw.add_text_top_left(roi_frame ,text)
+
     #cv2.imshow("1. Frame0", frame0)
     cv2.imshow("2. Region of interest", roi_frame)
     #cv2.imshow("3. gray_frame", gray_frame)

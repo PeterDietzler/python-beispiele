@@ -35,11 +35,11 @@ camera = frame_capture.Camera_Thread()
 
 camera.camera_source = camera_id # SET THE CORRECT CAMERA NUMBER
 #camera.camera_width,camera.camera_height =  640, 480
-camera.camera_width,camera.camera_height = 960, 720
+#camera.camera_width,camera.camera_height = 960, 720
 #camera.camera_width,camera.camera_height = 1280, 720
 #camera.camera_width,camera.camera_height = 1280,1024
-#camera.camera_width,camera.camera_height = 1920,1080
-camera.camera_frame_rate = 30
+camera.camera_width,camera.camera_height = 1920,1080
+camera.camera_frame_rate = 20
 #camera.camera_fourcc = cv2.VideoWriter_fourcc(*"YUYV")
 camera.camera_fourcc = cv2.VideoWriter_fourcc(*"MJPG")
 
