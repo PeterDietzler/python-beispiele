@@ -22,13 +22,13 @@ class Tcontroller:
         self.myData.sendData(message)
 
     def sendManualMode(self):
-            self.sendData('M')
+        self.sendData('M')
 
     def sendAutoMode(self):
-            self.sendData('A')
+        self.sendData('A')
 
     def sendTpt(self):
-            self.sendData('tpt')
+        self.sendData('tpt')
 
     def sendGohome(self):
         self.sendData('gohome')

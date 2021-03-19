@@ -1,18 +1,22 @@
 import os
+import platform
 
 cwd = os.getcwd()
 
 
-#ifdef WINDOWS
-myComPort = 'COM1'
-myFrameWidth = 800
-myFrameHeight = 430
-#endif
 
-#ifdef PI
-#PRE myComPort = '/dev/ttyACM0'
-#PRE myFrameWidth = 800
-#PRE myFrameHeight = 430
-#endif
+uname = platform.uname()
+
+print(f"System: {uname.system}")
+
+if uname.system == "Linux":
+    myComPort = '/dev/ttyUSB1'
+    myFrameWidth = 800
+    myFrameHeight = 430
+
+if uname.system == "Windows":
+    myComPort = 'COM1'
+    myFrameWidth = 800
+    myFrameHeight = 430
 
 myBaudRate = 115200

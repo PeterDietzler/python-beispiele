@@ -1,0 +1,9 @@
+
+Help
+Auto
+Manual
+History
+Bat
+Error
+Reset
+

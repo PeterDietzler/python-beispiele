@@ -9,12 +9,12 @@ from globalvars import myFrameWidth
 class CameraPage(tk.Frame):
 
     def BtnStreamVideoStart_click(self, appClass):
-        #if CamVar1.get() == 1:
-        #    myStreamVideo.start(1)
-            # webbrowser.open("http://localhost:8000/index.html") war azgeklammert
+        if CamVar1.get() == 1:
+            myStreamVideo.start(0)
+            webbrowser.open("http://localhost:8000/index.html") #war azgeklammert
 
-        #else:
-            #myStreamVideo.start(0)
+        else:
+            myStreamVideo.start(0)
         pass
 
     def BtnStreamVideoStop_click(self, appClass):
