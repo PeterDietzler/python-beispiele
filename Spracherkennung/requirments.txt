@@ -1,6 +1,6 @@
 
-pydub
-SpeechRecognition
-pyaudio
+math
+sounddevice
+numpy
 
 
