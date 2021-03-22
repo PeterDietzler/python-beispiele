@@ -1,5 +1,7 @@
 import cv2
 import frame_draw
+import platform
+
 
 # camera setup
 camera_source = 0
@@ -7,8 +9,14 @@ camera_width, camera_height = 1920,1080
 #camera_frame_rate = 30
 #camera_fourcc = cv2.VideoWriter_fourcc(*"MJPG")
 
+uname = platform.uname()
+hostname = uname.node
 
-cap = cv2.VideoCapture(camera_source, cv2.CAP_DSHOW)
+if hostname == 'sn68843071':
+    cap = cv2.VideoCapture(camera_source, cv2.CAP_DSHOW)
+else:
+    cap = cv2.VideoCapture(camera_source)
+    
 cap.set(3,camera_width)
 cap.set(4,camera_height)
 #cap.set(5,camera_frame_rate)
@@ -34,7 +42,6 @@ print('CAMERA:',"id:",camera_source, " Breite:",width,"px Höhe:",height,"px Fps
 
 
 
-
 while True:
     
     text = []
@@ -43,6 +50,10 @@ while True:
     
     #1. read frame
     ret, frame0 = cap.read()
+    if ret == False:
+        print('cap.read() re3turn False')
+        break
+    
     #height, width, _ = frame.shape
     frame1 = cv2.rotate(frame0, cv2.ROTATE_180)
     # 2. Extract Region of interest
@@ -66,22 +77,27 @@ while True:
         # Calculate area and remove small elements
         area = cv2.contourArea(cnt)
         #print(area)
-        if 150 < area < 3500:
-            #print(area)
-            cv2.drawContours( roi_frame, [cnt], -1, (0, 255, 0), 1)          #grün     
-            cv2.rectangle(roi_frame, (x, y), (x + w, y + h), (255, 0, 0), 1)
+        if 1800 < area < 2800:
+            print(area)
+            #cv2.drawContours( roi_frame, [cnt], -1, (0, 255, 0), 3)          #grün     
+            #cv2.rectangle(roi_frame, (x, y), (x + w, y + h), (255, 0, 0), 1)
+            cv2.polylines( roi_frame, [cnt], True, (0,255,0), 2)
+
             pass
 
     
     
     
     draw.add_text_top_left(roi_frame ,text)
-
+ 
     #cv2.imshow("1. Frame0", frame0)
     cv2.imshow("2. Region of interest", roi_frame)
     #cv2.imshow("3. gray_frame", gray_frame)
     #cv2.imshow("4. threshold_frame", threshold_frame)
-   
+    #calling the mouse click event
+    
+    
+    
     key = cv2.waitKey(30)
     if key == 27:    # ESC
         break 

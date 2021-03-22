@@ -33,7 +33,7 @@ class DRAW:
             text = text.split('\n')
         text = [line.rstrip() for line in text]
         
-        color = self.colors.get('blue',(0,255,255))
+        color = self.colors.get('yellow',(0,255,255))
             
         lineloc = 10
         lineheight = 30

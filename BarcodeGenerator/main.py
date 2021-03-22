@@ -2,7 +2,7 @@ import cv2
 import frame_draw
 import numpy as np
 from pyzbar.pyzbar import decode
-
+import platform
 import qrcode
 import pyqrcode
 
@@ -20,8 +20,14 @@ camera_width, camera_height = 1920,1080
 #camera_fourcc = cv2.VideoWriter_fourcc(*"MJPG")
 
 
-#cap = cv2.VideoCapture(camera_source, cv2.CAP_DSHOW)
-cap = cv2.VideoCapture(camera_source)
+uname = platform.uname()
+hostname = uname.node
+
+if hostname == 'sn68843071':
+    cap = cv2.VideoCapture(camera_source, cv2.CAP_DSHOW)
+else:
+    cap = cv2.VideoCapture(camera_source)
+
 cap.set(3,camera_width)
 cap.set(4,camera_height)
 #cap.set(5,camera_frame_rate)
@@ -52,6 +58,7 @@ print(myPassList)
 #
 # Barcode LIB
 #
+'''
 def make_barcode(filename, msg):
     # Save as .png format
     thecode = barcode.get('Code39', msg, writer=ImageWriter())
@@ -63,12 +70,12 @@ def make_barcode(filename, msg):
 for text in myPassList:
     make_barcode( 'picture/' + text, text)
     print(  'Generate BarCode: ' + text)
-
+'''
 
 #
 # qrcode LIB
 #
-
+'''
 def make_qr( filename, msg):
     qr = qrcode.QRCode(
         version=2,
@@ -84,19 +91,17 @@ def make_qr( filename, msg):
 for text in myPassList:
     make_qr( 'picture/' + text, text)
     print(  'Generate file: ' + text)
+'''
 
 #
 # pyqrCode LIN
 #
 for mycode in myPassList:
     url = pyqrcode.create( mycode, error='H')  # H -> hohe fehlerkorektur
-    #url.svg( 'picture/' + mycode + '_2.svg', scale=10)
+    url.svg( 'picture/' + mycode + '_2.svg', scale=10)
     url.png( 'picture/' + mycode + '_10.jpg', scale=10)
     print(  'Generate file: ' + mycode)
-    url.png( 'picture/' + mycode + '_100.jpg', scale=100)
-    print(  'Generate file: ' + mycode)
-
-
+    
 
 
 
@@ -109,7 +114,10 @@ while 1:
     
     #1. read frame
     ret, frame0 = cap.read()
-    '''
+    if ret == False:
+        print('cap.read() return False')
+        break
+    
     #height, width, _ = frame.shape
     frame1 = cv2.rotate(frame0, cv2.ROTATE_180)
     # 2. Extract Region of interest
@@ -138,7 +146,7 @@ while 1:
             cv2.drawContours( roi_frame, [cnt], -1, (0, 255, 0), 1)          #grün     
             cv2.rectangle(roi_frame, (x, y), (x + w, y + h), (255, 0, 0), 1)
             pass
-    '''
+    
     for barcode in decode(frame0):     
         #text.append(str(barcode.data))
         #print(barcode)
@@ -167,7 +175,7 @@ while 1:
     #cv2.imshow("3. gray_frame", gray_frame)
     #cv2.imshow("4. threshold_frame", threshold_frame)
    
-    key = cv2.waitKey(100)
+    key = cv2.waitKey(10)
     if key == 27:    # ESC
         break 
     
