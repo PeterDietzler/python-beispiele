@@ -51,6 +51,7 @@ sd.wait()
 FrequezList = [220, 233.082, 246.942, 261.6, 277.183, 311.127, 329.628, 349.228, 369.994, 391.995, 415.305, 440.0]
 SoundTime = 0.5
 for f in FrequezList: 
+    print("Frequenz = ", f)
     sd.play( getSound( f ), SamplingFrequenz)
     sd.wait()
 
