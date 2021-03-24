@@ -5,22 +5,35 @@ import platform
 
 # camera setup
 camera_source = 0
-camera_width, camera_height = 1920,1080
+camera_width, camera_height = 1280,720
+#camera_width, camera_height = 1920,1080
 #camera_frame_rate = 30
 #camera_fourcc = cv2.VideoWriter_fourcc(*"MJPG")
 
 uname = platform.uname()
 hostname = uname.node
+print('Hostname = ' +hostname)
 
 if hostname == 'sn68843071':
     cap = cv2.VideoCapture(camera_source, cv2.CAP_DSHOW)
+    rotate_window = 1
+elif hostname == 'NB-0028':
+    cap = cv2.VideoCapture(camera_source, cv2.CAP_DSHOW)
+    rotate_window = 0
 else:
     cap = cv2.VideoCapture(camera_source)
-    
+    rotate_window = 0
+
+
+
 cap.set(3,camera_width)
 cap.set(4,camera_height)
 #cap.set(5,camera_frame_rate)
 #cap.set(6,camera_fourcc)
+
+width = cap.get(3)
+height= cap.get(4)
+frate = cap.get(5)
 
 
 #-------------------------------
@@ -28,19 +41,10 @@ cap.set(4,camera_height)
 #-------------------------------
 
 draw = frame_draw.DRAW()
-draw.width = camera_width
-draw.height = camera_height
-
-
-width = cap.get(3)
-height= cap.get(4)
-frate = cap.get(5)
-
+draw.width = width
+draw.height = height
 
 print('CAMERA:',"id:",camera_source, " Breite:",width,"px Höhe:",height,"px Fps:",frate)
-
-
-
 
 while True:
     
@@ -55,10 +59,14 @@ while True:
         break
     
     #height, width, _ = frame.shape
-    frame1 = cv2.rotate(frame0, cv2.ROTATE_180)
+    if rotate_window == 1:
+        frame1 = cv2.rotate(frame0, cv2.ROTATE_180)
+    else:
+        frame1 = frame0
+        
     # 2. Extract Region of interest
     x1,y1   = 0, 0
-    x2,y2 = camera_width, camera_height-200
+    x2,y2 = int(width), int(height-200)
     roi_frame = frame1[y1: y2, x1: x2]
 
     # 3. convert to gray frame
@@ -82,11 +90,7 @@ while True:
             #cv2.drawContours( roi_frame, [cnt], -1, (0, 255, 0), 3)          #grün     
             #cv2.rectangle(roi_frame, (x, y), (x + w, y + h), (255, 0, 0), 1)
             cv2.polylines( roi_frame, [cnt], True, (0,255,0), 2)
-
             pass
-
-    
-    
     
     draw.add_text_top_left(roi_frame ,text)
  
@@ -101,7 +105,19 @@ while True:
     key = cv2.waitKey(30)
     if key == 27:    # ESC
         break 
-    
+    elif key == 114:    # 'r'
+        print('Press Butten R')
+        if rotate_window == 0:
+            rotate_window = 1
+        else:
+            rotate_window = 0
+    elif key == -1:  # normally -1 returned,so don't print it
+        continue
+    else:
+        print( key )   # else print its value
+        print('You pressed %d (0x%x), LSB: %d (%s)' % (key, key, key % 256,
+        repr(chr(key%256)) if key%256 < 128 else '?'))
+
 cap.release()
 cv2.destroyAllWindows()   
 
