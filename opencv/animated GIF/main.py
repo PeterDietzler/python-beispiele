@@ -1,6 +1,6 @@
 import cv2
 import imageio
-
+import os
 
 
 # https://www.youtube.com/watch?v=yy6KqVNmWYM&t=722s
@@ -10,7 +10,7 @@ import imageio
 # 1. Get Images
 cap = cv2.VideoCapture(0)
 
-
+filename="smiling.gif"
 frames = []
 image_count = 0
 
@@ -39,7 +39,7 @@ print("Images added: ", len(frames))
 
 
 print("Saving GIF file")
-with imageio.get_writer("smiling.gif", mode="I") as writer:
+with imageio.get_writer( filename, mode="I") as writer:
     for idx, frame in enumerate(frames):
         print("Adding frame to GIF file: ", idx + 1)
         writer.append_data(frame)
@@ -48,6 +48,12 @@ with imageio.get_writer("smiling.gif", mode="I") as writer:
         writer.append_data(frame)
         writer.append_data(frame)
         
-        
-        
+print("exit()")
+# on Linux
+os.system("pix "+filename)
+
+#import subprocess
+#subprocess.run(["pix", filename])
+
+cv2.destroyAllWindows()        
         
