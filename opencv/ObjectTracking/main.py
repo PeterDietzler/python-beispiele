@@ -1,12 +1,40 @@
 import cv2
 import frame_draw
 import platform
+import globalvars
 
+global PicturePath
+global imageName
+global roi_frame
 
+PicturePath = 'Picture'
+imageName = 'RangeOfIntrest'
+
+def draw_circle(event,x,y,flags,param):
+    global mouseX , mouseY
+    if event == cv2.EVENT_LBUTTONDBLCLK:
+        cv2.circle(roi_frame,(x,y),100,(255,0,0),-1)
+        mouseX,mouseY = x,y
+        print('DBLCLK x = %d, y = %d'%(mouseX,mouseY))
+        
+    elif event == cv2.EVENT_LBUTTONDOWN:
+        cv2.circle(roi_frame,(x,y),100,(255,0,0),-1)
+        mouseX,mouseY = x,y
+        print('DOWN  x = %d, y = %d'%(mouseX,mouseY))
+        
+    elif event == cv2.EVENT_MOUSEMOVE:
+        cv2.circle(roi_frame,(x,y),100,(255,0,0),-1)
+        mouseX,mouseY = x,y
+        print('MOVE x = %d, y = %d'%(mouseX,mouseY))
+        #print(mouseX,mouseY)
+
+def savePicture(Filename, FrameName):
+    print('Save picture')
+    cv2.imwrite( PicturePath +'/' + Filename, FrameName)
+    
 # camera setup
 camera_source = 0
-camera_width, camera_height = 1280,720
-#camera_width, camera_height = 1920,1080
+camera_width, camera_height = 1920,1080
 #camera_frame_rate = 30
 #camera_fourcc = cv2.VideoWriter_fourcc(*"MJPG")
 
@@ -14,10 +42,12 @@ uname = platform.uname()
 hostname = uname.node
 print('Hostname = ' +hostname)
 
-if hostname == 'sn68843071':
+if hostname == 'sn68843071':#LMP800
+    camera_width, camera_height = 1920,1080
     cap = cv2.VideoCapture(camera_source, cv2.CAP_DSHOW)
     rotate_window = 1
-elif hostname == 'NB-0028':
+elif hostname == 'NB-0028': #Laptop
+    camera_width, camera_height = 1280,720
     cap = cv2.VideoCapture(camera_source, cv2.CAP_DSHOW)
     rotate_window = 0
 else:
@@ -46,12 +76,14 @@ draw.height = height
 
 print('CAMERA:',"id:",camera_source, " Breite:",width,"px Höhe:",height,"px Fps:",frate)
 
+cv2.namedWindow( imageName)
+cv2.setMouseCallback( imageName, draw_circle)
+   
+
 while True:
-    
     text = []
     #text.append(f'CAMERA: {camera_source} {width}x{height} {frate}FPS')
     text.append(f'LAST CLICK: NONE')
-    
     #1. read frame
     ret, frame0 = cap.read()
     if ret == False:
@@ -86,37 +118,48 @@ while True:
         area = cv2.contourArea(cnt)
         #print(area)
         if 1800 < area < 2800:
-            print(area)
+            #print(area)
             #cv2.drawContours( roi_frame, [cnt], -1, (0, 255, 0), 3)          #grün     
             #cv2.rectangle(roi_frame, (x, y), (x + w, y + h), (255, 0, 0), 1)
             cv2.polylines( roi_frame, [cnt], True, (0,255,0), 2)
             pass
-    
+
+
     draw.add_text_top_left(roi_frame ,text)
  
     #cv2.imshow("1. Frame0", frame0)
-    cv2.imshow("2. Region of interest", roi_frame)
+    
+    cv2.imshow( imageName, roi_frame)
     #cv2.imshow("3. gray_frame", gray_frame)
     #cv2.imshow("4. threshold_frame", threshold_frame)
     #calling the mouse click event
     
     
     
-    key = cv2.waitKey(30)
+    #key = cv2.waitKey(30) 
+    #if key == 27:    # ESC
+    #    break 
+    
+    key = cv2.waitKey(1)
     if key == 27:    # ESC
         break 
-    elif key == 114:    # 'r'
+    key = key %256    
+    if key == ord('r'):
         print('Press Butten R')
         if rotate_window == 0:
             rotate_window = 1
         else:
             rotate_window = 0
-    elif key == -1:  # normally -1 returned,so don't print it
+    elif key == ord('p'):
+        print('x = %d, y = %d'%(mouseX , mouseY)) # mouseX,mouseY)
+    elif key == ord('w'):
+        savePicture( imageName +'.jpg', roi_frame)
+    elif key == 255:  # normally -1 returned,so don't print it
         continue
     else:
-        print( key )   # else print its value
-        print('You pressed %d (0x%x), LSB: %d (%s)' % (key, key, key % 256,
-        repr(chr(key%256)) if key%256 < 128 else '?'))
+        print('Press Kye = ', repr(chr(key%256)) )   # else print its value
+        #print('You pressed %d (0x%x), LSB: %d (%s)' % (key, key, key % 256,
+        #repr(chr(key%256)) if key%256 < 128 else '?'))
 
 cap.release()
 cv2.destroyAllWindows()   

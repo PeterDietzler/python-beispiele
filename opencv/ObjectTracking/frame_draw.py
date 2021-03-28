@@ -1,4 +1,5 @@
 import cv2
+import globalvars
 
 # ------------------------------
 # Draw on Frame
