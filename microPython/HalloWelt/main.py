@@ -62,7 +62,7 @@ def web_page():
            <center><p>LED is now <strong>""" + led_state + """</strong>.</p></center>  
         </body>  
         </html>"""  
-   return html_page
+    return html_page
 
 
 while True:
