@@ -42,20 +42,28 @@ def web_page():
     if led.value()==1:
         led_state = 'ON'
         print('led is ON')
+        R1= '2810'
+        R2= '2820'
+        R3= '2830'
+        R4= '2840'
+        R5= '2850'
+        R6= '2860'
+        R7= '2870'
+        R8= '2880'
+
     elif led.value()==0:
         led_state = 'OFF'
         print('led is OFF')
+        R1= '2801'
+        R2= '2802'
+        R3= '2803'
+        R4= '2804'
+        R5= '2805'
+        R6= '2806'
+        R7= '2807'
+        R8= '2808'
     
-    R1= 2800
-    R2= 2800
-    R3= 2800
-    R4= 2800
-    R5= 2800
-    R6= 2800
-    R7= 2800
-    R8= 2800
-    
-    
+        
     html_page = """<!DOCTYPE HTML>  
         <html>  
         <head>  
@@ -67,16 +75,18 @@ def web_page():
              <form>  
                <button type='submit' name="LED" value='1'> LED ON </button>  
                <button type='submit' name="LED" value='0'> LED OFF </button>  
+               <button type='submit' name="measure" value='1'> Measure </button>  
              </form>  
            </center>  
-           <center><p>R1 = <strong>""" + srt(R1) + """</strong>.</p></center>  
-           <center><p>R2 = <strong>""" + led_state + """</strong>.</p></center>  
-           <center><p>R3 = <strong>""" + led_state + """</strong>.</p></center>  
-           <center><p>R4 = <strong>""" + led_state + """</strong>.</p></center>  
-           <center><p>R5 = <strong>""" + led_state + """</strong>.</p></center>  
-           <center><p>R6 = <strong>""" + led_state + """</strong>.</p></center>  
-           <center><p>R7 = <strong>""" + led_state + """</strong>.</p></center>  
-           <center><p>R8 = <strong>""" + led_state + """</strong>.</p></center>  
+           <center><p>LED is now <strong>""" + led_state + """</strong>.</p></center>  
+           <center><p>R1 = <strong>""" + R1 + """</strong>.</p></center>  
+           <center><p>R2 = <strong>""" + R2 + """</strong>.</p></center>  
+           <center><p>R3 = <strong>""" + R3 + """</strong>.</p></center>  
+           <center><p>R4 = <strong>""" + R4 + """</strong>.</p></center>  
+           <center><p>R5 = <strong>""" + R5 + """</strong>.</p></center>  
+           <center><p>R6 = <strong>""" + R6 + """</strong>.</p></center>  
+           <center><p>R7 = <strong>""" + R7 + """</strong>.</p></center>  
+           <center><p>R8 = <strong>""" + R8 + """</strong>.</p></center>
         </body>  
         </html>"""  
     return html_page
@@ -95,8 +105,9 @@ while True:
 
     # Socket send()
     request = str(request)
-    led_on = request.find('/?LED=1')
+    led_on =  request.find('/?LED=1')
     led_off = request.find('/?LED=0')
+    measure_on = request.find('/?measure=1')
     if led_on == 6:
         print('LED ON')
         print(str(led_on))
@@ -105,7 +116,11 @@ while True:
         print('LED OFF')
         print(str(led_off))
         led.value(0)
+    elif measure_on == 6:
+        print('measure_on')
+        measure_state =1
     response = web_page()
+    measure_state = 0
     conn.send('HTTP/1.1 200 OK\n')
     conn.send('Content-Type: text/html\n')
     conn.send('Connection: close\n\n')
