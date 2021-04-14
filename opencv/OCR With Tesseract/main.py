@@ -5,8 +5,10 @@ import pytesseract
 
 filename = "OCR_picture2.jpg"
 
-
-pytesseract.pytesseract.tesseract_cmd = r"tesseract"
+  
+  
+#pytesseract.pytesseract.tesseract_cmd = r"tesseract"
+pytesseract.pytesseract.tesseract_cmd = r"C:\_PortableApps\Tesseract-OCR\tesseract.exe"
 
 img = cv2.imread( filename )
 text = pytesseract.image_to_string(img)
