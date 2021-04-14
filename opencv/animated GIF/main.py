@@ -21,8 +21,9 @@ print('Press Kye "q" to create the GIF file')
 
 while True:
     ret, frame = cap.read()
-    cv2.imshow("frame", frame)
     rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+    cv2.imshow("frame", frame)
 
     key = cv2.waitKey(0)
     if key == ord("a"):
@@ -44,13 +45,9 @@ with imageio.get_writer( filename, mode="I") as writer:
         print("Adding frame to GIF file: ", idx + 1)
         writer.append_data(frame)
         
-        writer.append_data(frame)
-        writer.append_data(frame)
-        writer.append_data(frame)
-        
+
 print("exit()")
-# on Linux
-os.system("pix "+filename)
+os.system(filename)
 
 #import subprocess
 #subprocess.run(["pix", filename])
