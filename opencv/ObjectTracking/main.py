@@ -42,8 +42,9 @@ uname = platform.uname()
 hostname = uname.node
 print('Hostname = ' +hostname)
 
-if hostname == 'sn68843071':#LMP800
+if hostname == 'SEL-0163':# LMP800
     camera_width, camera_height = 1920,1080
+    #camera_width, camera_height = 1280,720
     cap = cv2.VideoCapture(camera_source, cv2.CAP_DSHOW)
     rotate_window = 1
 elif hostname == 'NB-0028': #Laptop
