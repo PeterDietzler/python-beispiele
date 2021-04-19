@@ -1,6 +1,11 @@
-import requests
-import json
-import socket
+#import requests
+#import json
+#import socket
+from shelly import shelly
+from iobroker import iobroker
+
+
+
 
 """
 {
@@ -32,6 +37,7 @@ import socket
 "uptime":725}
  
  """
+'''
 
 def getHostname(ip):
 	return socket.gethostbyaddr(ip)
@@ -55,32 +61,71 @@ def getHostnameRange(ip):
 
 
 
-print(getHostname("192.168.188.27" ))
+#print(getHostname("192.168.188.27" ))
 
-getHostnameRange("192.168.188.")
-
-
+#getHostnameRange("192.168.188.")
 
 
+ 
 
-home = "http://192.168.188.27/status"
-r = requests.get(home) # Daten abfragen
+IP_Heitzung = "http://192.168.188.36/status" # Heizung tempeaturen
+ip_Brauchwasser = "http://192.168.188.37/status" # Heizung tempeaturen
+
+r = requests.get(IP_Heitzung) # Daten abfragen
 
 data    = json.loads(r.content)    
-print(str(data))
+print('Data ==: ',str(data))
 print(" ")
 
 ssid  = data['wifi_sta']['ssid'] 
 ip    = data['wifi_sta']['ip'] 
-
 mac   = data['mac'] 
 
+'''
+
+def my_map(x, in_min, in_max, out_min, out_max):
+    return int((x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min)
 
 
-print(home + ": " + ssid + ": " + ip + ": " + mac)
+ip_pcWohnzimmer = "192.168.188.35"
+ip_Heitzung     = "192.168.188.36" # Heizung tempeaturen
+ip_Brauchwasser = "192.168.188.37" # Heizung tempeaturen
 
 
+heitzung    = shelly(ip_Heitzung)
+bw_speicher = shelly(ip_Brauchwasser)
+pc_wohnzimmer= shelly(ip_pcWohnzimmer)
 
+
+print('aussen_Temperatur   = ', heitzung.get_temperature( 0), '°C' )
+print('kessel_Temperatur   = ', heitzung.get_temperature( 1), '°C' )
+temp = heitzung.get_temperature( 2)
+print('speicher_Temperatur = ', temp, '°C' )
+
+soc = my_map( temp, 35, 65, 0, 100)
+
+print('soc speicher        = ', soc, '%' )
+print('')
+print('ip_pcWohnzummer     = ', pc_wohnzimmer.get_power(0), 'W' )
+print('bw_speicher         = ', bw_speicher.get_power(0), 'W' )
+
+#bw_speicher.set_relay('toggel')
+
+
+evu_power         ='http://iobroker01:8087/getPlainValue/node-red.0.EVU.TotalPower'
+evu_energie       ='http://iobroker01:8087/getPlainValue/node-red.0.Haus.TotalEnergie'
+evu_ret_energie   ='http://iobroker01:8087/getPlainValue/node-red.0.EVU.EnergieReturned'
+pv_power          ='http://iobroker01:8087/getPlainValue/node-red.0.PV.Power'
+pv_energie        ='http://iobroker01:8087/getPlainValue/node-red.0.PV.TotalEnergie'
+
+evu = iobroker()
+print('')
+print('EVU Bezug leistung = ', evu.get_raw( evu_power) , 'W')
+print('EVU Bezug Energie  = ', evu.get_raw( evu_energie) , 'kWh')
+print('EVU Export         = ', evu.get_raw( evu_ret_energie) , 'W')
+
+print('PV Leistung        = ', evu.get_raw( pv_power) , 'W')
+print('PV Energie Total   = ',  evu.get_raw( pv_energie) , 'kWh')
 
 
 
