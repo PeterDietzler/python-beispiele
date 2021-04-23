@@ -1,5 +1,8 @@
 import requests
 import json
+
+
+
 class shelly:
     def __init__(self, ip_address, user='', password=''):
         #print('init shelly()')
@@ -29,13 +32,15 @@ class shelly:
         if state == 1: # turn on
             #http://192.168.xxx.xxx/relay/0?turn=on
             ip = 'http://' + self.ip + '/relay/0?turn=on'
-        elif state == 1: # turn off
+        elif state == 0: # turn off
             #http://192.168.xxx.xxx/relay/0?turn=off
             ip = 'http://' + self.ip + '/relay/0?turn=off'
         elif state == 'toggel': # turn off
             #http://192.168.xxx.xxx/relay/0?turn=toggle
             ip = 'http://' + self.ip + '/relay/0?turn=toggle'
         else:
+            print('set_relay() ip = ', ip)
+            print('set_relay() unknow State')
             return -1
         requests.post(ip) # Daten abfragen
         return 0
