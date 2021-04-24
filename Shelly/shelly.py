@@ -16,7 +16,11 @@ class shelly:
     def read_status(self):
         ip = 'http://' + self.ip + '/status'
         #print('ip=', ip)
-        r = requests.get(ip) # Daten abfragen
+        try:
+            r = requests.get(ip) # Daten abfragen
+        except:
+            r = requests.get(ip) # einfach nochmal probieren
+        
         self.data = json.loads(r.content)
         
     def get_temperature(self, channel):
