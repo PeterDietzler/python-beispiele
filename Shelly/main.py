@@ -44,6 +44,7 @@ mac   = data['mac']
 def set_BW_Heizleistung(Leistung): # aktuell freie leistung 
     global Current_State
     global Power_State
+    global _Leistung
     ip_1KW = "192.168.188.37" # Heizung tempeaturen
     ip_2KW = "192.168.188.43" # Heizung tempeaturen
     Heizstab_1000W = shelly(ip_1KW)
@@ -57,7 +58,8 @@ def set_BW_Heizleistung(Leistung): # aktuell freie leistung
     
     if Leistung > 0:
         _Leistung = total_Power + Leistung
-        print('_Leistung = ', _Leistung)
+        
+        print('BW_Leistung_calc    =', _Leistung,'W')
         if _Leistung > 1000:
             _Leistung =1000
     else:
@@ -68,24 +70,28 @@ def set_BW_Heizleistung(Leistung): # aktuell freie leistung
         # Alles auschalten
         Heizstab_1000W.set_relay(0)
         #Heizstab_2000W.set_relay(0)
+        print('BW_Leistung         = 0 W')
         return 0
     elif _Leistung < 2000:
         # 1000W schalten
         Heizstab_1000W.set_relay(1)
         #Heizstab_2000W.set_relay(0)
         Power_State = 1
+        print('BW_Leistung         = 1000 W')
         return 0
     elif _Leistung < 3000:
         # 2000W schalten
         Heizstab_1000W.set_relay(1)
         #Heizstab_2000W.set_relay(1)
         Power_State = 2
+        print('BW_Leistung         = 3000 W')
         return 0
     elif _Leistung < 3001:
         # 3000W schalten
         Heizstab_1000W.set_relay(1)
         #Heizstab_2000W.set_relay(1)
         Power_State = 3
+        print('BW_Leistung         = 3000 W')
     else:
         print('Maximal Leisrung 3000W')
     
@@ -114,36 +120,42 @@ PV_Leistung = 0
 
 evu = iobroker()
 
+BW_Heitzleistung = 0
+BW_Heitzleistung_alt = 0
 
 while True:
     temp            = heitzung.get_temperature( 2)
     PV_Leistung     = evu.get_raw( pv_power)*-1 
-    BW_Speicher_soc = my_map( temp, 35, 65, 0, 100)
+    BW_Speicher_soc = my_map( temp, 35, 70, 0, 100)
     EVU_Netz_Bezug = evu.get_raw( evu_power)
     
     if EVU_Netz_Bezug < 0:
         EVU_Netz_Export = EVU_Netz_Bezug* -1.0
     else:
         EVU_Netz_Export = 0
- 
+        
+    BW_Heitzleistung =  BW_Heitzleistung_alt *0.7 + EVU_Netz_Export*0.3    
+    BW_Heitzleistung_alt= BW_Heitzleistung
+    
     if (BW_Speicher_soc < 98):
-        set_BW_Heizleistung( EVU_Netz_Export )
+        set_BW_Heizleistung( BW_Heitzleistung )
     
     if (BW_Speicher_soc >= 100) :
         set_BW_Heizleistung( 0 )
   
-    print('-------------------------------------' )
+    print('------------------------------' )
     #print('aussen_Temperatur   = ', heitzung.get_temperature( 0), '°C' )
     #print('kessel_Temperatur   = ', heitzung.get_temperature( 1), '°C' )
 
-    print('BW_Speicher_soc     = ', BW_Speicher_soc, '%' )
+    print('BW_Speicher_soc     =', BW_Speicher_soc, '%' )
     #print('BW_Heitzstab        = ', BW_Heitzstab, 'W' )
-    print('speicher_Temperatur = ', temp, '°C' )
-    print('BW_Speicher_Heizung = ', BW_Speicher_Heizung)
+    print('BW_Temperatur       =', temp, '°C' )
+    #print('BW_Speicher_Heizung = ', BW_Speicher_Heizung)
 
-    print('PV Leistung         = ', PV_Leistung , 'W')
-    print('EVU_Netz_Export     = ', EVU_Netz_Export)   
-    print('EVU_Netz_Bezug      = ', EVU_Netz_Bezug , 'W')
+    print('PV Leistung         =', PV_Leistung , 'W')
+    print('EVU_Export_Leistung =', EVU_Netz_Export, 'W')   
+    print('BW_Heitzleistung    =', BW_Heitzleistung, 'W')   
+    #print('EVU_Netz_Bezug      = ', EVU_Netz_Bezug , 'W')
     
  
     time.sleep(10)
