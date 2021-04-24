@@ -3,25 +3,24 @@ from iobroker import iobroker
 import time
 
 
-
 '''
 def getHostname(ip):
-	return socket.gethostbyaddr(ip)
+    return socket.gethostbyaddr(ip)
 
 def getHostnameRange(ip):
-	res = ""
-	for i in range(1, 256):
-		
-		host_to_check = ip + str(i)
-		try:
-			host_check = socket.gethostbyaddr(host_to_check)
-			print( str(i) + " -> " + str(host_check))
-		except socket.herror:
-			#print 'Kein Dns-Eintrag für {}'.format(host_to_check)
-			pass
-		except socket.gaierror:
-			#print 'Fehlerhafte Eingabe bei den Netzwerkadressen!'
-			break
+    res = ""
+    for i in range(1, 256):
+        
+        host_to_check = ip + str(i)
+        try:
+            host_check = socket.gethostbyaddr(host_to_check)
+            print( str(i) + " -> " + str(host_check))
+        except socket.herror:
+            #print 'Kein Dns-Eintrag für {}'.format(host_to_check)
+            pass
+        except socket.gaierror:
+            #print 'Fehlerhafte Eingabe bei den Netzwerkadressen!'
+            break
 
 #print(getHostname("192.168.188.27" ))
 
@@ -56,10 +55,10 @@ def set_BW_Heizleistung(Leistung): # aktuell freie leistung
     if total_Power < 500:
         Power_State = 0
     
-    if Leistung > 0:
+    if Leistung > 1:
         _Leistung = total_Power + Leistung
         
-        print('BW_Leistung_calc    =', _Leistung,'W')
+        #print('BW_Leistung_calc    =', _Leistung,'W')
         if _Leistung > 1000:
             _Leistung =1000
     else:
@@ -70,30 +69,32 @@ def set_BW_Heizleistung(Leistung): # aktuell freie leistung
         # Alles auschalten
         Heizstab_1000W.set_relay(0)
         #Heizstab_2000W.set_relay(0)
-        print('BW_Leistung         = 0 W')
+        #print('BW_Leistung         = 0 W')
         return 0
     elif _Leistung < 2000:
         # 1000W schalten
         Heizstab_1000W.set_relay(1)
         #Heizstab_2000W.set_relay(0)
         Power_State = 1
-        print('BW_Leistung         = 1000 W')
-        return 0
+        #print('BW_Leistung         = 1000 W')
+        return 1000
     elif _Leistung < 3000:
         # 2000W schalten
         Heizstab_1000W.set_relay(1)
         #Heizstab_2000W.set_relay(1)
         Power_State = 2
-        print('BW_Leistung         = 3000 W')
-        return 0
+        #print('BW_Leistung         = 3000 W')
+        return 2000
     elif _Leistung < 3001:
         # 3000W schalten
         Heizstab_1000W.set_relay(1)
         #Heizstab_2000W.set_relay(1)
         Power_State = 3
-        print('BW_Leistung         = 3000 W')
+        #print('BW_Leistung         = 3000 W')
+        return 3000
     else:
         print('Maximal Leisrung 3000W')
+        return -1
     
 
 
@@ -120,8 +121,8 @@ PV_Leistung = 0
 
 evu = iobroker()
 
-BW_Heitzleistung = 0
-BW_Heitzleistung_alt = 0
+EVU_Netz_exp = 0
+EVU_Netz_exp_alt = 0
 
 while True:
     temp            = heitzung.get_temperature( 2)
@@ -134,30 +135,32 @@ while True:
     else:
         EVU_Netz_Export = 0
         
-    BW_Heitzleistung =  BW_Heitzleistung_alt *0.7 + EVU_Netz_Export*0.3    
-    BW_Heitzleistung_alt= BW_Heitzleistung
+    EVU_Netz_exp =  EVU_Netz_exp_alt *0.7 + EVU_Netz_Export*0.3    
+    EVU_Netz_exp_alt= EVU_Netz_exp
     
     if (BW_Speicher_soc < 98):
-        set_BW_Heizleistung( BW_Heitzleistung )
+        Speicher_Lade_Leistung = set_BW_Heizleistung( EVU_Netz_exp )
     
     if (BW_Speicher_soc >= 100) :
-        set_BW_Heizleistung( 0 )
+        Speicher_Lade_Leistung = set_BW_Heizleistung( 0 )
   
-    print('------------------------------' )
     #print('aussen_Temperatur   = ', heitzung.get_temperature( 0), '°C' )
     #print('kessel_Temperatur   = ', heitzung.get_temperature( 1), '°C' )
+    import time
 
-    print('BW_Speicher_soc     =', BW_Speicher_soc, '%' )
-    #print('BW_Heitzstab        = ', BW_Heitzstab, 'W' )
-    print('BW_Temperatur       =', temp, '°C' )
-    #print('BW_Speicher_Heizung = ', BW_Speicher_Heizung)
+    # seconds passed since epoch
+    seconds = time.time()
+    local_time = time.ctime(seconds)
+    print(local_time, ' -> Brauchwasser-Speicher PV-Überschuß Ladereglung')    
+    print('-------------------------------------------------------------' )
+    print("|     PV: %4.0dW              |    Netz_exp.: %4.0f W" % (PV_Leistung, EVU_Netz_Export ))
+    print('-------------------------------------------------------------' )
+    print("|     SoC: %2.0d %%              |    Temperatur: %2.2f °C" % (BW_Speicher_soc, temp))
+    print('-------------------------------------------------------------' )
+    print("|     akt. Power: %4.0dW      |    EVU_Netz_exp: %4.0f W" % (Speicher_Lade_Leistung, EVU_Netz_exp))
+    print('-------------------------------------------------------------' )
+    print('' )
 
-    print('PV Leistung         =', PV_Leistung , 'W')
-    print('EVU_Export_Leistung =', EVU_Netz_Export, 'W')   
-    print('BW_Heitzleistung    =', BW_Heitzleistung, 'W')   
-    #print('EVU_Netz_Bezug      = ', EVU_Netz_Bezug , 'W')
-    
- 
     time.sleep(10)
 
 
