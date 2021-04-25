@@ -1,7 +1,7 @@
 from shelly import shelly
 from iobroker import iobroker
 import time
-
+import os
 
 '''
 def getHostname(ip):
@@ -40,10 +40,41 @@ ip    = data['wifi_sta']['ip']
 mac   = data['mac'] 
 
 '''
+
+
+
+def clearConsole():
+    command = 'clear'
+    if os.name in ('nt', 'dos'):  # If Machine is running on Windows, use cls
+        command = 'cls'
+    os.system(command)
+    
+def static_vars(**kwargs):
+    def decorate(func):
+        for k in kwargs:
+            setattr(func, k, kwargs[k])
+        return func
+    return decorate    
+    
+    
+@static_vars(counter1=0)    
 def set_BW_Heizleistung(Leistung): # aktuell freie leistung 
     global Current_State
     global Power_State
     global _Leistung
+    set_BW_Heizleistung.counter1 +=1
+    
+       
+    if not hasattr(set_BW_Heizleistung,"counter3"):
+        set_BW_Heizleistung.counter3=0
+    
+    set_BW_Heizleistung.counter3 += 1 
+    
+    
+    
+    print('counter1', set_BW_Heizleistung.counter1)
+    print('counter3', set_BW_Heizleistung.counter3)
+
     ip_1KW = "192.168.188.37" # Heizung tempeaturen
     ip_2KW = "192.168.188.43" # Heizung tempeaturen
     Heizstab_1000W = shelly(ip_1KW)
@@ -69,28 +100,25 @@ def set_BW_Heizleistung(Leistung): # aktuell freie leistung
         # Alles auschalten
         Heizstab_1000W.set_relay(0)
         #Heizstab_2000W.set_relay(0)
-        #print('BW_Leistung         = 0 W')
+        Power_State = 0
         return 0
     elif _Leistung < 2000:
         # 1000W schalten
         Heizstab_1000W.set_relay(1)
         #Heizstab_2000W.set_relay(0)
         Power_State = 1
-        #print('BW_Leistung         = 1000 W')
         return 1000
     elif _Leistung < 3000:
         # 2000W schalten
         Heizstab_1000W.set_relay(1)
         #Heizstab_2000W.set_relay(1)
         Power_State = 2
-        #print('BW_Leistung         = 3000 W')
         return 2000
     elif _Leistung < 3001:
         # 3000W schalten
         Heizstab_1000W.set_relay(1)
         #Heizstab_2000W.set_relay(1)
         Power_State = 3
-        #print('BW_Leistung         = 3000 W')
         return 3000
     else:
         print('Maximal Leisrung 3000W')
@@ -123,11 +151,17 @@ evu = iobroker()
 
 EVU_Netz_exp = 0
 EVU_Netz_exp_alt = 0
-
+Loop_Counter = 0
+os.environ['TERM'] = 'xterm'
 while True:
+    
+    clearConsole()
+    
+    Loop_Counter += 1
+
     temp            = heitzung.get_temperature( 2)
     PV_Leistung     = evu.get_raw( pv_power)*-1 
-    BW_Speicher_soc = my_map( temp, 35, 70, 0, 100)
+    BW_Speicher_soc = my_map( temp, 40, 70, 0, 100)
     EVU_Netz_Bezug = evu.get_raw( evu_power)
     
     if EVU_Netz_Bezug < 0:
@@ -138,7 +172,7 @@ while True:
     EVU_Netz_exp =  EVU_Netz_exp_alt *0.7 + EVU_Netz_Export*0.3    
     EVU_Netz_exp_alt= EVU_Netz_exp
     
-    if (BW_Speicher_soc < 98):
+    if (BW_Speicher_soc < 100):
         Speicher_Lade_Leistung = set_BW_Heizleistung( EVU_Netz_exp )
     
     if (BW_Speicher_soc >= 100) :
@@ -151,13 +185,14 @@ while True:
     # seconds passed since epoch
     seconds = time.time()
     local_time = time.ctime(seconds)
-    print(local_time, ' -> Brauchwasser-Speicher PV-Überschuß Ladereglung')    
+    print('Brauchwasser-Speicher PV-Überschuß Ladereglung ' )    
+    print(local_time, '(loop=%d)' % Loop_Counter)    
     print('-------------------------------------------------------------' )
     print("|     PV: %4.0dW              |    Netz_exp.: %4.0f W" % (PV_Leistung, EVU_Netz_Export ))
     print('-------------------------------------------------------------' )
     print("|     SoC: %2.0d %%              |    Temperatur: %2.2f °C" % (BW_Speicher_soc, temp))
     print('-------------------------------------------------------------' )
-    print("|     akt. Power: %4.0dW      |    EVU_Netz_exp: %4.0f W" % (Speicher_Lade_Leistung, EVU_Netz_exp))
+    print("|     akt. Power: %4.0dW      |    Filter(Netz_exp): %4.0f W" % (Speicher_Lade_Leistung, EVU_Netz_exp))
     print('-------------------------------------------------------------' )
     print('' )
 

@@ -18,16 +18,20 @@ class shelly:
         #print('ip=', ip)
         try:
             r = requests.get(ip) # Daten abfragen
+            self.data = json.loads(r.content)
         except:
-            r = requests.get(ip) # einfach nochmal probieren
+            print('ERROR: except: read_status()->requests.get(ip)') # einfach nochmal probieren
+            self.data = 0
         
-        self.data = json.loads(r.content)
         
     def get_temperature(self, channel):
         #print('get_temperature()')
         if channel>= 0 and channel <= 2:
             self.read_status()
-            return self.data['ext_temperature'][str(channel)]['tC']
+            if self.data == 0:
+                return 0
+            else:
+                return self.data['ext_temperature'][str(channel)]['tC']
         else:
             print('get__temperature() channel 0,1,2 ')
             return -1
@@ -51,14 +55,21 @@ class shelly:
 
     def get_relay(self):
         self.read_status()
-        if self.data['relays']['0']['ison'] == 'false':
+        if self.data == 0:
             return 0
         else:
-            return 1
+            if self.data['relays']['0']['ison'] == 'false':
+                return 0
+            else:
+                return 1
+
     def get_power(self, channel):
         if channel>= 0 and channel <= 2:
             self.read_status()
-            return self.data['meters'][channel]['power']
+            if self.data == 0:
+                return 0
+            else:
+                return self.data['meters'][channel]['power']
         else:
             return -1
         
