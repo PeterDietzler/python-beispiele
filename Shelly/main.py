@@ -75,49 +75,37 @@ def set_BW_Heizleistung(Leistung): # aktuell freie leistung
     print('counter1', set_BW_Heizleistung.counter1)
     print('counter3', set_BW_Heizleistung.counter3)
 
-    ip_1KW = "192.168.188.37" # Heizung tempeaturen
-    ip_2KW = "192.168.188.43" # Heizung tempeaturen
+    ip_1KW = "192.168.188.60" # Heizung tempeaturen
+    ip_2KW = "192.168.188.52" # Heizung tempeaturen
+    
     Heizstab_1000W = shelly(ip_1KW)
     Heizstab_2000W = shelly(ip_2KW)
-    current_Power_1000W    =  Heizstab_1000W.get_power(0)
-    #current_Power_2000W    =  Heizstab_2000W.get_power(0)
+
+    akt_Power_1KW  =  Heizstab_1000W.get_power(0)
+    akt_Power_2KW  =  Heizstab_2000W.get_power(0)
     
-    total_Power = current_Power_1000W #  + current_Power_2000W  
-    if total_Power < 500:
-        Power_State = 0
     
-    if Leistung > 1:
-        _Leistung = total_Power + Leistung
+    Schalt_Leistung = akt_Power_1KW + akt_Power_1KW + Leistung
         
-        #print('BW_Leistung_calc    =', _Leistung,'W')
-        if _Leistung > 1000:
-            _Leistung =1000
-    else:
-        _Leistung = 0
-        pass
     
-    if _Leistung < 1000:
-        # Alles auschalten
+    if Schalt_Leistung < 1000:   # Alles auschalten
         Heizstab_1000W.set_relay(0)
-        #Heizstab_2000W.set_relay(0)
+        Heizstab_2000W.set_relay(0)
         Power_State = 0
         return 0
-    elif _Leistung < 2000:
-        # 1000W schalten
+    elif Schalt_Leistung < 2000: # 1000W schalten
         Heizstab_1000W.set_relay(1)
-        #Heizstab_2000W.set_relay(0)
+        Heizstab_2000W.set_relay(0)
         Power_State = 1
         return 1000
-    elif _Leistung < 3000:
-        # 2000W schalten
-        Heizstab_1000W.set_relay(1)
-        #Heizstab_2000W.set_relay(1)
+    elif Schalt_Leistung < 3000: # 2000W schalten
+        Heizstab_1000W.set_relay(0)
+        Heizstab_2000W.set_relay(1)
         Power_State = 2
         return 2000
-    elif _Leistung < 3001:
-        # 3000W schalten
+    elif Schalt_Leistung < 10000: # 3000W schalten
         Heizstab_1000W.set_relay(1)
-        #Heizstab_2000W.set_relay(1)
+        Heizstab_2000W.set_relay(1)
         Power_State = 3
         return 3000
     else:
