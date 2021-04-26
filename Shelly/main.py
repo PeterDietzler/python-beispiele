@@ -85,8 +85,16 @@ def set_BW_Heizleistung(Leistung): # aktuell freie leistung
     akt_Power_2KW  =  Heizstab_2000W.get_power(0)
     
     
-    Schalt_Leistung = akt_Power_1KW + akt_Power_1KW + Leistung
-        
+    Schalt_Leistung = akt_Power_1KW + akt_Power_2KW + Leistung
+    if Schalt_Leistung < 0:
+        Schalt_Leistung = 0
+    
+    print('akt_Power_1KW   = ',akt_Power_1KW)
+    print('akt_Power_2KW   = ',akt_Power_2KW)
+    print('Leistung        = ',Leistung)
+    print('Schalt_Leistung = ',Schalt_Leistung)
+    
+    
     
     if Schalt_Leistung < 1000:   # Alles auschalten
         Heizstab_1000W.set_relay(0)
@@ -103,7 +111,7 @@ def set_BW_Heizleistung(Leistung): # aktuell freie leistung
         Heizstab_2000W.set_relay(1)
         Power_State = 2
         return 2000
-    elif Schalt_Leistung < 10000: # 3000W schalten
+    elif Schalt_Leistung < 4000: # 3000W schalten
         Heizstab_1000W.set_relay(1)
         Heizstab_2000W.set_relay(1)
         Power_State = 3
