@@ -84,10 +84,18 @@ def set_BW_Heizleistung(Leistung): # aktuell freie leistung
     akt_Power_1KW  =  Heizstab_1000W.get_power(0)
     akt_Power_2KW  =  Heizstab_2000W.get_power(0)
     
+    akt_Power = akt_Power_1KW + akt_Power_2KW
+        
     
     Schalt_Leistung = akt_Power_1KW + akt_Power_2KW + Leistung
-    if Schalt_Leistung < 0:
-        Schalt_Leistung = 0
+    if Leistung < 1:
+        Schalt_Leistung = akt_Power - 1000 + 200
+        if Schalt_Leistung <= 0:
+            Schalt_Leistung = 0
+    else:
+        Schalt_Leistung = akt_Power + Leistung
+    
+    
     
     print('akt_Power_1KW   = ',akt_Power_1KW)
     print('akt_Power_2KW   = ',akt_Power_2KW)
@@ -98,21 +106,25 @@ def set_BW_Heizleistung(Leistung): # aktuell freie leistung
     
     if Schalt_Leistung < 1000:   # Alles auschalten
         Heizstab_1000W.set_relay(0)
+        time.sleep(1)
         Heizstab_2000W.set_relay(0)
         Power_State = 0
         return 0
     elif Schalt_Leistung < 2000: # 1000W schalten
         Heizstab_1000W.set_relay(1)
+        time.sleep(1)
         Heizstab_2000W.set_relay(0)
         Power_State = 1
         return 1000
-    elif Schalt_Leistung < 3000: # 2000W schalten
+    elif Schalt_Leistung < 3100: # 2000W schalten
         Heizstab_1000W.set_relay(0)
+        time.sleep(1)
         Heizstab_2000W.set_relay(1)
         Power_State = 2
         return 2000
     elif Schalt_Leistung < 4000: # 3000W schalten
         Heizstab_1000W.set_relay(1)
+        time.sleep(1)
         Heizstab_2000W.set_relay(1)
         Power_State = 3
         return 3000
@@ -157,16 +169,19 @@ while True:
 
     temp            = heitzung.get_temperature( 2)
     PV_Leistung     = evu.get_raw( pv_power)*-1 
-    BW_Speicher_soc = my_map( temp, 40, 70, 0, 100)
-    EVU_Netz_Bezug = evu.get_raw( evu_power)
+    BW_Speicher_soc = my_map( temp, 40, 72, 0, 100)
+    EVU_Netz_Bezug  = evu.get_raw( evu_power)
     
-    if EVU_Netz_Bezug < 0:
-        EVU_Netz_Export = EVU_Netz_Bezug* -1.0
-    else:
-        EVU_Netz_Export = 0
-        
+    EVU_Netz_Export = EVU_Netz_Bezug * -1.0
+    
+    # EVU_Netz_exp ist der gdämpte export 
     EVU_Netz_exp =  EVU_Netz_exp_alt *0.7 + EVU_Netz_Export*0.3    
     EVU_Netz_exp_alt= EVU_Netz_exp
+    
+    print('EVU_Netz_exp =',EVU_Netz_exp)
+    
+    if EVU_Netz_exp < 0:
+        EVU_Netz_exp = 0    
     
     if (BW_Speicher_soc < 100):
         Speicher_Lade_Leistung = set_BW_Heizleistung( EVU_Netz_exp )
@@ -184,7 +199,16 @@ while True:
     print('Brauchwasser-Speicher PV-Überschuß Ladereglung ' )    
     print(local_time, '(loop=%d)' % Loop_Counter)    
     print('-------------------------------------------------------------' )
-    print("|     PV: %4.0dW              |    Netz_exp.: %4.0f W" % (PV_Leistung, EVU_Netz_Export ))
+    if EVU_Netz_Bezug < 0 :
+        evu_Netz_Bezug = 0
+    else:
+        evu_Netz_Bezug = EVU_Netz_Bezug
+    print("|     Haus: %4.0dW            |    Netz_imp.: %4.0f W" % (PV_Leistung + EVU_Netz_Bezug , evu_Netz_Bezug ))
+    print('-------------------------------------------------------------' )
+    if EVU_Netz_Export < 0 :
+        evu_Netz_Export = 0
+    else: evu_Netz_Export = EVU_Netz_Export
+    print("|     PV: %4.0dW              |    Netz_exp.: %4.0f W" % (PV_Leistung, evu_Netz_Export ))
     print('-------------------------------------------------------------' )
     print("|     SoC: %2.0d %%              |    Temperatur: %2.2f °C" % (BW_Speicher_soc, temp))
     print('-------------------------------------------------------------' )
