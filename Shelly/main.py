@@ -150,7 +150,7 @@ while True:
     EVU_Netz_Export = EVU_Netz_Bezug * -1.0
     
     # EVU_Netz_exp ist der gdämpte export( Filter 1er Ordnung) 
-    EVU_Netz_exp =  EVU_Netz_exp_alt *0.9 + EVU_Netz_Export*0.1    
+    EVU_Netz_exp =  EVU_Netz_exp_alt *0.95 + EVU_Netz_Export*0.05     
     EVU_Netz_exp_alt= EVU_Netz_exp
     
     if (BW_Speicher_soc < 100):
@@ -175,7 +175,7 @@ while True:
     print('-------------------------------------------------------------' )
     print('' )
 
-    time.sleep(2)
+    time.sleep(5)
 
 
 
