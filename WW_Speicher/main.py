@@ -40,6 +40,16 @@ ip    = data['wifi_sta']['ip']
 mac   = data['mac'] 
 
 '''
+def myPrint( text, level):
+    local_time = time.localtime() # get struct_time
+    time_string = time.strftime("%Y.%m.%d %H:%M:%S", local_time)
+
+    FileTime = time.strftime("%Y.%m.%d", local_time)
+    
+    myString = time_string + ' | '+  str(level) +' | ' + text 
+    f = open(FileTime + "_WW_Speicher.log", "w")
+    f.write( myString)  
+    f.close()
 
 
 
@@ -184,6 +194,7 @@ def ueberschuss_laden():
 #
 def maximal_laden():
      
+    myPrint('Starte Programm maximal_laden()', 0)
     # 1. Temperaturen  ermitteln
     ip_Heitzung     = "192.168.188.36" # Heizung tempeaturen
     heitzung    = shelly(ip_Heitzung)
@@ -223,27 +234,29 @@ def maximal_laden():
         akt_Power = Heizstab_1000W.get_power(0) + Heizstab_2000W.get_power(0)
         if akt_Power > 1:
             if WW_Speicher_temperatur >= 69 or WW_Power_counter > (60*10):
+                myPrint('Heizstab aus', 0)
                 Heizstab_1000W.set_relay(0)
                 time.sleep(1)
                 Heizstab_2000W.set_relay(0)
         else: # power = 0
-            if WW_Speicher_temperatur < 66 :
+            if WW_Speicher_temperatur < 65 and WW_PumpenPower <10:
+                myPrint('Heizstab ein', 0)
                 Heizstab_1000W.set_relay(1)
                 time.sleep(1)
                 Heizstab_2000W.set_relay(1)
             pass
         
-        seconds = time.time()
-        local_time = time.ctime(seconds)
-         
+        local_time = time.localtime() # get struct_time
+        time_string = time.strftime("%Y.%m.%d %H:%M:%S", local_time)
+        
         print('Warm-Wasser-Speicher Maximale Heitzleistung' )    
-        print(local_time)    
+        print(time_string)    
         print('-------------------------------------------------------------' )
         print("|     Kessel T  : %2.1f°C      |    Aussen T    : %4.1f°C" % (Kessel_temperatur, Aussen_temperatur ))
         print('-------------------------------------------------------------' )
         print("|     WW Power  : %4.0dW       |    WW_Pumpe    : %4.0fW (%d)" % (akt_Power, WW_PumpenPower, WW_Power_counter))
         print('-------------------------------------------------------------' )
-        print("|     WW SoC    : %2.0d%%         |    WW Temp     : %2.1f°C" % (WW_Speicher_soc, WW_Speicher_temperatur))
+        print("|     WW SoC    : %2.0d%%        |    WW Temp     : 65 < %2.1f°C < 69" % (WW_Speicher_soc, WW_Speicher_temperatur))
         print('-------------------------------------------------------------' )
         print('' )
         '''
