@@ -50,7 +50,10 @@ class shelly:
             print('set_relay() ip = ', ip)
             print('set_relay() unknow State')
             return -1
-        requests.post(ip) # Daten abfragen
+        try:
+            requests.post(ip) # Daten abfragen
+        except:
+            pass
         return 0
 
     def get_relay(self):

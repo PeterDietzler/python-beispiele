@@ -10,8 +10,11 @@ class iobroker:
         #print('ip=', ip)
 
     def get_raw(self, http):
-        r = requests.get(http) # Daten abfragen
-        return float( r.content)
+        try:
+            r = requests.get(http) # Daten abfragen
+            return float( r.content)
+        except:
+            return 0
     
     
     

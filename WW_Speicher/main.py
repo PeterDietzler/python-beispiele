@@ -176,7 +176,7 @@ def ueberschuss_laden():
         print("|     WW SoC    : %2.0d%%       |    WW Temp     : %2.2f°C" % (BW_Speicher_soc, temp))
         print('-------------------------------------------------------------' )
         print('' )
-
+        
         time.sleep(5)
 
 # WW-Speicher als Energie vernichter
@@ -223,6 +223,7 @@ def maximal_laden():
         
         seconds = time.time()
         local_time = time.ctime(seconds)
+        ''' 
         print('Warm-Wasser-Speicher Maximale Heitzleistung' )    
         print(local_time)    
         print('-------------------------------------------------------------' )
@@ -233,6 +234,11 @@ def maximal_laden():
         print("|     WW SoC    : %2.0d%%         |    WW Temp     : %2.1f°C" % (WW_Speicher_soc, WW_Speicher_temperatur))
         print('-------------------------------------------------------------' )
         print('' )
+        '''
+        print(" 0 speicher:%2.1f Kessel:%2.1f Aussen: %2.1f 80" % ( WW_Speicher_temperatur, Kessel_temperatur, Aussen_temperatur ))
+        
+        
+ 
 
         time.sleep(5)
     
