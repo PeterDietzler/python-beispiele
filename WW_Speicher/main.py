@@ -201,21 +201,21 @@ def maximal_laden():
     os.environ['TERM'] = 'xterm'
     while True:
         clearConsole()
-        
-        WW_Speicher_temperatur = heitzung.get_temperature( 2)
-        Kessel_temperatur      = heitzung.get_temperature( 1)
+
         Aussen_temperatur      = heitzung.get_temperature( 0)
+        Kessel_temperatur      = heitzung.get_temperature( 1)
+        WW_Speicher_temperatur = heitzung.get_temperature( 2)
         
         WW_Speicher_soc = my_map( WW_Speicher_temperatur, 40, 67, 0, 100)
  
         akt_Power = Heizstab_1000W.get_power(0) + Heizstab_2000W.get_power(0)
         if akt_Power > 1:
-            if Kessel_temperatur >= 70:
+            if WW_Speicher_temperatur >= 69:
                 Heizstab_1000W.set_relay(0)
                 time.sleep(1)
                 Heizstab_2000W.set_relay(0)
         else: # power = 0
-            if Kessel_temperatur < 68:
+            if WW_Speicher_temperatur < 67:
                 Heizstab_1000W.set_relay(1)
                 time.sleep(1)
                 Heizstab_2000W.set_relay(1)
@@ -223,7 +223,7 @@ def maximal_laden():
         
         seconds = time.time()
         local_time = time.ctime(seconds)
-        print('Warm-Wasser-Speicher PV-Überschuß Ladereglung ' )    
+        print('Warm-Wasser-Speicher Maximale Heitzleistung' )    
         print(local_time)    
         print('-------------------------------------------------------------' )
         print("|     Kessel T  : %2.1f°C      |    Aussen T    : %4.1f°C" % (Kessel_temperatur, Aussen_temperatur ))
