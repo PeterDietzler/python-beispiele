@@ -121,7 +121,7 @@ def ueberschuss_laden():
     evu_ret_energie   ='http://iobroker01:8087/getPlainValue/node-red.0.EVU.EnergieReturned'
     pv_power          ='http://iobroker01:8087/getPlainValue/node-red.0.PV.Power'
     pv_energie        ='http://iobroker01:8087/getPlainValue/node-red.0.PV.TotalEnergie'
-
+    bwPumpe           ='http://iobroker01:8087/getPlainValue/node-red.0.Heizung.BrauchwasserPumpe'
     ip_pcWohnzimmer = "192.168.188.35"
     ip_Heitzung     = "192.168.188.36" # Heizung tempeaturen
     ip_Brauchwasser = "192.168.188.37" # Heizung tempeaturen
@@ -196,7 +196,10 @@ def maximal_laden():
     Heizstab_1000W = shelly(ip_1KW)
     Heizstab_2000W = shelly(ip_2KW)
 
-
+    ip_WW_PumpenPower ='http://iobroker01:8087/getPlainValue/node-red.0.Heizung.BrauchwasserPumpe'
+    iob = iobroker()
+    
+    WW_Power_counter = 0
      
     os.environ['TERM'] = 'xterm'
     while True:
@@ -207,15 +210,24 @@ def maximal_laden():
         WW_Speicher_temperatur = heitzung.get_temperature( 2)
         
         WW_Speicher_soc = my_map( WW_Speicher_temperatur, 40, 67, 0, 100)
- 
+
+        WW_PumpenPower = iob.get_raw(ip_WW_PumpenPower)
+        if WW_PumpenPower > 10:
+            WW_Power_counter += 5
+        else:
+            WW_Power_counter = 0
+    
+        
+        
+
         akt_Power = Heizstab_1000W.get_power(0) + Heizstab_2000W.get_power(0)
         if akt_Power > 1:
-            if WW_Speicher_temperatur >= 69:
+            if WW_Speicher_temperatur >= 69 or WW_Power_counter > (60*10):
                 Heizstab_1000W.set_relay(0)
                 time.sleep(1)
                 Heizstab_2000W.set_relay(0)
         else: # power = 0
-            if WW_Speicher_temperatur < 67:
+            if WW_Speicher_temperatur < 66 :
                 Heizstab_1000W.set_relay(1)
                 time.sleep(1)
                 Heizstab_2000W.set_relay(1)
@@ -223,20 +235,20 @@ def maximal_laden():
         
         seconds = time.time()
         local_time = time.ctime(seconds)
-        ''' 
+         
         print('Warm-Wasser-Speicher Maximale Heitzleistung' )    
         print(local_time)    
         print('-------------------------------------------------------------' )
         print("|     Kessel T  : %2.1f°C      |    Aussen T    : %4.1f°C" % (Kessel_temperatur, Aussen_temperatur ))
         print('-------------------------------------------------------------' )
-        print("|     WW Power  : %4.0dW       |    Netz(Filter): %4.0fW" % (akt_Power,2))
+        print("|     WW Power  : %4.0dW       |    WW_Pumpe    : %4.0fW (%d)" % (akt_Power, WW_PumpenPower, WW_Power_counter))
         print('-------------------------------------------------------------' )
         print("|     WW SoC    : %2.0d%%         |    WW Temp     : %2.1f°C" % (WW_Speicher_soc, WW_Speicher_temperatur))
         print('-------------------------------------------------------------' )
         print('' )
         '''
         print(" 0 speicher:%2.1f Kessel:%2.1f Aussen: %2.1f 80" % ( WW_Speicher_temperatur, Kessel_temperatur, Aussen_temperatur ))
-        
+        '''
         
  
 

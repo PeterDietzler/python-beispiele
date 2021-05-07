@@ -20,7 +20,7 @@ class shelly:
             r = requests.get(ip) # Daten abfragen
             self.data = json.loads(r.content)
         except:
-            print('ERROR: except: read_status()->requests.get(ip)') # einfach nochmal probieren
+            #print('ERROR: except: read_status()->requests.get(ip)') # einfach nochmal probieren
             self.data = 0
         
         
