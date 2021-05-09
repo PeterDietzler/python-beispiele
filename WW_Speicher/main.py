@@ -46,8 +46,8 @@ def myPrint( text, level):
 
     FileTime = time.strftime("%Y.%m.%d", local_time)
     
-    myString = time_string + ' | '+  str(level) +' | ' + text 
-    f = open(FileTime + "_WW_Speicher.log", "w")
+    myString = time_string + ' | '+  str(level) +' | ' + text + '\n'
+    f = open(FileTime + "_WW_Speicher.log", "a")
     f.write( myString)  
     f.close()
 
@@ -224,8 +224,12 @@ def maximal_laden():
 
         WW_PumpenPower = iob.get_raw(ip_WW_PumpenPower)
         if WW_PumpenPower > 10:
+            if WW_Power_counter ==0:
+                myPrint('WW_PumpenPower ein,  Temp= %2.1f°C' % (WW_Speicher_temperatur), 0)
             WW_Power_counter += 5
         else:
+            if WW_Power_counter >0:
+                myPrint('WW_PumpenPower aus, Temp= %2.1f°C' % (WW_Speicher_temperatur), 0)
             WW_Power_counter = 0
     
         
@@ -233,18 +237,39 @@ def maximal_laden():
 
         akt_Power = Heizstab_1000W.get_power(0) + Heizstab_2000W.get_power(0)
         if akt_Power > 1:
-            if WW_Speicher_temperatur >= 69 or WW_Power_counter > (60*10):
-                myPrint('Heizstab aus', 0)
+            if WW_Speicher_temperatur >= 67.3 or WW_Power_counter > (60*10):
+                myPrint('Heizstab aus, Temp= %2.1f°C' % (WW_Speicher_temperatur), 0)
                 Heizstab_1000W.set_relay(0)
                 time.sleep(1)
                 Heizstab_2000W.set_relay(0)
         else: # power = 0
-            if WW_Speicher_temperatur < 65 and WW_PumpenPower <10:
-                myPrint('Heizstab ein', 0)
-                Heizstab_1000W.set_relay(1)
-                time.sleep(1)
-                Heizstab_2000W.set_relay(1)
-            pass
+            if WW_Speicher_temperatur <= 65.6 and WW_PumpenPower <10:
+                if Aussen_temperatur > 20: # Nur Brauchwasser erwärmung
+                    # PV-Überschuss in Brauchwasser Speicher verheitzen
+                    if WW_Speicher_temperatur <= 60.0:
+                        myPrint('Heizstab(3KW) ein, Temp= %2.1f°C' % (WW_Speicher_temperatur), 0)
+                        Heizstab_1000W.set_relay(1)
+                        time.sleep(1)
+                        Heizstab_2000W.set_relay(1)
+                     
+                    if WW_Speicher_temperatur >= 65.0:
+                        myPrint('Heizstab aus, Temp= %2.1f°C' % (WW_Speicher_temperatur), 0)
+                        Heizstab_1000W.set_relay(0)
+                        time.sleep(1)
+                        Heizstab_2000W.set_relay(0)
+
+                elif Aussen_temperatur > 19:
+                    myPrint('Heizstab(1KW) ein, Temp= %2.1f°C' % (WW_Speicher_temperatur), 0)
+                    Heizstab_1000W.set_relay(1)
+                    pass    
+                elif Aussen_temperatur > 17:
+                    myPrint('Heizstab(2KW) ein, Temp= %2.1f°C' % (WW_Speicher_temperatur), 0)
+                    Heizstab_2000W.set_relay(1)
+                else:
+                    myPrint('Heizstab(3KW) ein, Temp= %2.1f°C' % (WW_Speicher_temperatur), 0)
+                    Heizstab_1000W.set_relay(1)
+                    time.sleep(1)
+                    Heizstab_2000W.set_relay(1)
         
         local_time = time.localtime() # get struct_time
         time_string = time.strftime("%Y.%m.%d %H:%M:%S", local_time)
@@ -256,7 +281,7 @@ def maximal_laden():
         print('-------------------------------------------------------------' )
         print("|     WW Power  : %4.0dW       |    WW_Pumpe    : %4.0fW (%d)" % (akt_Power, WW_PumpenPower, WW_Power_counter))
         print('-------------------------------------------------------------' )
-        print("|     WW SoC    : %2.0d%%        |    WW Temp     : 65 < %2.1f°C < 69" % (WW_Speicher_soc, WW_Speicher_temperatur))
+        print("|     WW SoC    : %2.0d%%        |    WW Temp     : 65.6°C < %2.1f°C < 67.3°C" % (WW_Speicher_soc, WW_Speicher_temperatur))
         print('-------------------------------------------------------------' )
         print('' )
         '''
