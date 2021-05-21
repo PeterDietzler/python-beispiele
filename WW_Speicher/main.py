@@ -47,11 +47,20 @@ def myPrint( text, level):
     FileTime = time.strftime("%Y.%m.%d", local_time)
     
     myString = time_string + ' | '+  str(level) +' | ' + text + '\n'
-    f = open(FileTime + "_WW_Speicher.log", "a")
+    f = open("log/" + FileTime + "_WW_Speicher.log", "a")
     f.write( myString)  
     f.close()
 
+def logTemperatur( temp, intervall):
+    local_time = time.localtime() # get struct_time
+    time_string = time.strftime("%Y.%m.%d %H:%M:%S", local_time)
 
+    myString = time_string + '\t' +str(temp) + '\n'
+    f = open("log/Temperatur.log", "a")
+    f.write( myString)  
+    f.close()
+    pass
+                   
 
 def clearConsole():
     command = 'clear'
@@ -72,45 +81,52 @@ def set_BW_Heizleistung( EVU_Netz_export ): # aktuell freie leistung
     global Current_State
     global Power_State
     global _Leistung
-
     ip_1KW = "192.168.188.60" # Shelly 1PM Heizung 1kW
     ip_2KW = "192.168.188.52" # Shelly 1PM Heizung 2kW
     
     Heizstab_1000W = shelly(ip_1KW)
     Heizstab_2000W = shelly(ip_2KW)
 
+    '''
     akt_Power = Heizstab_1000W.get_power(0) + Heizstab_2000W.get_power(0)
     
     if EVU_Netz_export < 1:
         Schalt_Leistung = akt_Power - 1000 + 200
     else:
         Schalt_Leistung = akt_Power + EVU_Netz_export
+    '''
+    Schalt_Leistung = EVU_Netz_export
     
     if Schalt_Leistung < 1:   # Alles auschalten
+        myPrint('Heizstab aus', 0)
         Heizstab_1000W.set_relay(0)
         time.sleep(1)
         Heizstab_2000W.set_relay(0)
         return 0
     
     elif Schalt_Leistung < 1000:   # Alles auschalten
+        myPrint('Heizstab aus', 0)
         Heizstab_1000W.set_relay(0)
         time.sleep(1)
         Heizstab_2000W.set_relay(0)
         return 0
     
     elif Schalt_Leistung < 2000: # 1000W schalten
+        myPrint('Heizstab 1000W', 0)
         Heizstab_1000W.set_relay(1)
         time.sleep(1)
         Heizstab_2000W.set_relay(0)
         return 1000
 
     elif Schalt_Leistung < 3100: # 2000W schalten
+        myPrint('Heizstab 2000W', 0)
         Heizstab_1000W.set_relay(0)
         time.sleep(1)
         Heizstab_2000W.set_relay(1)
         return 2000
     
     elif Schalt_Leistung < 4000: # 3000W schalten
+        myPrint('Heizstab 3000W', 0)
         Heizstab_1000W.set_relay(1)
         time.sleep(1)
         Heizstab_2000W.set_relay(1)
@@ -148,6 +164,7 @@ def ueberschuss_laden():
 
     EVU_Netz_exp = 0
     EVU_Netz_exp_alt = 0
+    Speicher_Lade_Leistung =0
     os.environ['TERM'] = 'xterm'
     while True:
         
@@ -166,7 +183,8 @@ def ueberschuss_laden():
         EVU_Netz_exp_alt= EVU_Netz_exp
         
         if (BW_Speicher_soc < 100):
-            Speicher_Lade_Leistung = set_BW_Heizleistung( EVU_Netz_exp )
+            if PV_Leistung > 1000:
+                Speicher_Lade_Leistung = set_BW_Heizleistung( 1000)
         
         if (BW_Speicher_soc >= 100) :
             Speicher_Lade_Leistung = set_BW_Heizleistung( 0 )
@@ -199,7 +217,7 @@ def maximal_laden():
     ip_Heitzung     = "192.168.188.36" # Heizung tempeaturen
     heitzung    = shelly(ip_Heitzung)
     
-     
+ 
     # 3. Heitzstab einbinden      
     ip_1KW = "192.168.188.60" # Shelly 1PM Heizung 1kW
     ip_2KW = "192.168.188.52" # Shelly 1PM Heizung 2kW
@@ -220,6 +238,8 @@ def maximal_laden():
         Kessel_temperatur      = heitzung.get_temperature( 1)
         WW_Speicher_temperatur = heitzung.get_temperature( 2)
         
+        logTemperatur( WW_Speicher_temperatur, 0)
+
         WW_Speicher_soc = my_map( WW_Speicher_temperatur, 40, 67, 0, 100)
 
         WW_PumpenPower = iob.get_raw(ip_WW_PumpenPower)
@@ -237,13 +257,14 @@ def maximal_laden():
 
         akt_Power = Heizstab_1000W.get_power(0) + Heizstab_2000W.get_power(0)
         if akt_Power > 1:
-            if WW_Speicher_temperatur >= 67.3 or WW_Power_counter > (60*10):
+            if WW_Speicher_temperatur >= 67.3 or WW_Power_counter > (60*5):
                 myPrint('Heizstab aus, Temp= %2.1f°C' % (WW_Speicher_temperatur), 0)
                 Heizstab_1000W.set_relay(0)
                 time.sleep(1)
                 Heizstab_2000W.set_relay(0)
         else: # power = 0
             if WW_Speicher_temperatur <= 65.6 and WW_PumpenPower <10:
+                '''
                 if Aussen_temperatur > 20: # Nur Brauchwasser erwärmung
                     # PV-Überschuss in Brauchwasser Speicher verheitzen
                     if WW_Speicher_temperatur <= 60.0:
@@ -258,11 +279,11 @@ def maximal_laden():
                         time.sleep(1)
                         Heizstab_2000W.set_relay(0)
 
-                elif Aussen_temperatur > 19:
+                elif Aussen_temperatur > 19.5:
                     myPrint('Heizstab(1KW) ein, Temp= %2.1f°C' % (WW_Speicher_temperatur), 0)
                     Heizstab_1000W.set_relay(1)
                     pass    
-                elif Aussen_temperatur > 17:
+                elif Aussen_temperatur > 19:
                     myPrint('Heizstab(2KW) ein, Temp= %2.1f°C' % (WW_Speicher_temperatur), 0)
                     Heizstab_2000W.set_relay(1)
                 else:
@@ -270,7 +291,15 @@ def maximal_laden():
                     Heizstab_1000W.set_relay(1)
                     time.sleep(1)
                     Heizstab_2000W.set_relay(1)
-        
+                '''
+                if Kessel_temperatur < 55:
+                    myPrint('Heizstab(3KW) ein, Temp= %2.1f°C' % (WW_Speicher_temperatur), 0)
+                    Heizstab_1000W.set_relay(1)
+                    time.sleep(1)
+                    Heizstab_2000W.set_relay(1)
+                
+                
+                
         local_time = time.localtime() # get struct_time
         time_string = time.strftime("%Y.%m.%d %H:%M:%S", local_time)
         
@@ -294,5 +323,5 @@ def maximal_laden():
     
 
 
-#ueberschuss_laden()
-maximal_laden()
+ueberschuss_laden()
+#maximal_laden()
