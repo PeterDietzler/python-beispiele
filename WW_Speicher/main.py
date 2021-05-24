@@ -87,11 +87,14 @@ def set_BW_Heizleistung( EVU_Netz_export ): # aktuell freie leistung
     Heizstab_1000W = shelly(ip_1KW)
     Heizstab_2000W = shelly(ip_2KW)
 
-    '''
+    
     akt_Power = Heizstab_1000W.get_power(0) + Heizstab_2000W.get_power(0)
     
-    if EVU_Netz_export < 1:
-        Schalt_Leistung = akt_Power - 1000 + 200
+    
+    #if EVU_Netz_export - akt_Power <=10:
+        #return akt_Power
+    
+    '''
     else:
         Schalt_Leistung = akt_Power + EVU_Netz_export
     '''
@@ -113,9 +116,9 @@ def set_BW_Heizleistung( EVU_Netz_export ): # aktuell freie leistung
     
     elif Schalt_Leistung < 2000: # 1000W schalten
         myPrint('Heizstab 1000W', 0)
-        Heizstab_1000W.set_relay(1)
-        time.sleep(1)
         Heizstab_2000W.set_relay(0)
+        time.sleep(1)
+        Heizstab_1000W.set_relay(1)
         return 1000
 
     elif Schalt_Leistung < 3100: # 2000W schalten
@@ -135,6 +138,9 @@ def set_BW_Heizleistung( EVU_Netz_export ): # aktuell freie leistung
         print('Maximal Leisrung 3000W')
         return -1
     
+def set_Soco_Charger( power):
+    myPrint('Soco_Charger() ', 0)
+    pass
 
 
 def my_map(x, in_min, in_max, out_min, out_max):
@@ -164,6 +170,9 @@ def ueberschuss_laden():
 
     EVU_Netz_exp = 0
     EVU_Netz_exp_alt = 0
+    PV_Leistung_alt=0
+    PV_Leistung_filter=0
+    
     Speicher_Lade_Leistung =0
     os.environ['TERM'] = 'xterm'
     while True:
@@ -182,11 +191,24 @@ def ueberschuss_laden():
         EVU_Netz_exp =  EVU_Netz_exp_alt *0.95 + EVU_Netz_Export*0.05     
         EVU_Netz_exp_alt= EVU_Netz_exp
         
-        if (BW_Speicher_soc < 100):
-            if PV_Leistung > 1000:
-                Speicher_Lade_Leistung = set_BW_Heizleistung( 1000)
+        PV_Leistung_filter =PV_Leistung_alt *0.9 + PV_Leistung*0.1
+        PV_Leistung_alt = PV_Leistung_filter
         
-        if (BW_Speicher_soc >= 100) :
+        
+        if (BW_Speicher_soc < 100):
+            if PV_Leistung_filter < 400:
+                set_Soco_Charger( 0)
+            
+            if PV_Leistung_filter < 800:
+                Speicher_Lade_Leistung = set_BW_Heizleistung( 0)
+            elif (PV_Leistung_filter > 1200) and (PV_Leistung_filter < 1900):
+                Speicher_Lade_Leistung = set_BW_Heizleistung( 1000)
+            elif (PV_Leistung_filter > 2200) and (PV_Leistung_filter < 2900):
+                Speicher_Lade_Leistung = set_BW_Heizleistung( 2000)
+            elif PV_Leistung_filter > 3100:
+                Speicher_Lade_Leistung = set_BW_Heizleistung( 3000)
+        
+        elif (BW_Speicher_soc >= 100) :
             Speicher_Lade_Leistung = set_BW_Heizleistung( 0 )
 
         # seconds passed since epoch
@@ -195,7 +217,7 @@ def ueberschuss_laden():
         print('Warm-Wasser-Speicher PV-Überschuß Ladereglung ' )    
         print(local_time)    
         print('-------------------------------------------------------------' )
-        print("|     PV ges.   : %4.0dW      |    Netz_exp.   : %4.0fW" % (PV_Leistung, EVU_Netz_Export ))
+        print("|     PV ges.   : %4.0dW      |    PV_filter.   : %4.0fW" % (PV_Leistung, PV_Leistung_filter ))
         print('-------------------------------------------------------------' )
         print("|     Haus verb.: %4.0dW      |    Netz_imp.   : %4.0fW" % (PV_Leistung + EVU_Netz_Bezug-Speicher_Lade_Leistung , EVU_Netz_Bezug ))
         print('-------------------------------------------------------------' )
