@@ -43,9 +43,10 @@ hostname = uname.node
 print('Hostname = ' +hostname)
 
 if hostname == 'SEL-0163':# LMP800
-    camera_width, camera_height = 1920,1080
-    #camera_width, camera_height = 1280,720
+    #camera_width, camera_height = 1920,1080
+    camera_width, camera_height = 1280,720
     cap = cv2.VideoCapture(camera_source, cv2.CAP_DSHOW)
+    #cap = cv2.VideoCapture(camera_source)
     rotate_window = 1
 elif hostname == 'NB-0028': #Laptop
     camera_width, camera_height = 1280,720
@@ -88,7 +89,7 @@ while True:
     #1. read frame
     ret, frame0 = cap.read()
     if ret == False:
-        print('cap.read() re3turn False')
+        print('cap.read() return False')
         break
     
     #height, width, _ = frame.shape
@@ -106,7 +107,7 @@ while True:
     gray_frame = cv2.cvtColor( roi_frame,cv2.COLOR_BGR2GRAY)
 
     # 4. threshold frame n out of 255 (85 = 33%)
-    _, threshold_frame = cv2.threshold( gray_frame, 90, 200, cv2.THRESH_BINARY)
+    _, threshold_frame = cv2.threshold( gray_frame, 115, 140, cv2.THRESH_BINARY)
 
     # 5. Object Detection
     contours, _ = cv2.findContours( threshold_frame, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -118,11 +119,12 @@ while True:
         # Calculate area and remove small elements
         area = cv2.contourArea(cnt)
         #print(area)
-        if 1800 < area < 2800:
-            #print(area)
+        if 600 < area < 1100:
+            print(area)
             #cv2.drawContours( roi_frame, [cnt], -1, (0, 255, 0), 3)          #grün     
             #cv2.rectangle(roi_frame, (x, y), (x + w, y + h), (255, 0, 0), 1)
-            cv2.polylines( roi_frame, [cnt], True, (0,255,0), 2)
+            #cv2.polylines( roi_frame, [cnt], True, (0,255,0), 2)
+            cv2.polylines( roi_frame, [cnt], True, (0,0,255), 2)
             pass
 
 
