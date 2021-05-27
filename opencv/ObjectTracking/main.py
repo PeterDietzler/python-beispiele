@@ -123,8 +123,8 @@ while True:
             print(area)
             #cv2.drawContours( roi_frame, [cnt], -1, (0, 255, 0), 3)          #grün     
             #cv2.rectangle(roi_frame, (x, y), (x + w, y + h), (255, 0, 0), 1)
-            #cv2.polylines( roi_frame, [cnt], True, (0,255,0), 2)
-            cv2.polylines( roi_frame, [cnt], True, (0,0,255), 2)
+            cv2.polylines( roi_frame, [cnt], True, (0,255,0), 2)#grüner Rahmen
+            #cv2.polylines( roi_frame, [cnt], True, (0,0,255), 2) #roter Rahmen
             pass
 
 
