@@ -172,7 +172,7 @@ def ueberschuss_laden():
     EVU_Netz_exp_alt = 0
     PV_Leistung_alt=0
     PV_Leistung_filter=0
-    
+    Loop_Time = 5 # Sekunden
     Speicher_Lade_Leistung =0
     os.environ['TERM'] = 'xterm'
     while True:
@@ -182,7 +182,7 @@ def ueberschuss_laden():
 
         temp            = heitzung.get_temperature( 2)
         PV_Leistung     = evu.get_raw( pv_power)*-1 
-        BW_Speicher_soc = my_map( temp, 40, 67, 0, 100)
+        BW_Speicher_soc = my_map( temp, 40, 66, 0, 100)
         EVU_Netz_Bezug  = evu.get_raw( evu_Total_Power)  # positiv(+) für Netzbezug, negativ(-) für Netzeinspeisung 
                                         
         EVU_Netz_Export = EVU_Netz_Bezug * -1.0
@@ -210,7 +210,18 @@ def ueberschuss_laden():
         
         elif (BW_Speicher_soc >= 100) :
             Speicher_Lade_Leistung = set_BW_Heizleistung( 0 )
-
+        
+        f = open("log/" + "SpeicherEnergie_Wh.log", "r")
+        SpeicherEnergie_Wh_alt = f.readline()  
+        f.close()
+        
+        SpeicherEnergie_Wh = float(SpeicherEnergie_Wh_alt) + (PV_Leistung*1.0 * Loop_Time*1.0) / 3600
+        
+        f = open("log/" + "SpeicherEnergie_Wh.log", "w")
+        f.write( str(SpeicherEnergie_Wh) )  
+        f.close()
+        
+        
         # seconds passed since epoch
         seconds = time.time()
         local_time = time.ctime(seconds)
@@ -218,6 +229,8 @@ def ueberschuss_laden():
         print(local_time)    
         print('-------------------------------------------------------------' )
         print("|     PV ges.   : %4.0dW      |    PV_filter.   : %4.0fW" % (PV_Leistung, PV_Leistung_filter ))
+        print('-------------------------------------------------------------' )
+        print("|     PV_Eenrgie:   %dWh                                            "% SpeicherEnergie_Wh)
         print('-------------------------------------------------------------' )
         print("|     Haus verb.: %4.0dW      |    Netz_imp.   : %4.0fW" % (PV_Leistung + EVU_Netz_Bezug-Speicher_Lade_Leistung , EVU_Netz_Bezug ))
         print('-------------------------------------------------------------' )
@@ -227,7 +240,7 @@ def ueberschuss_laden():
         print('-------------------------------------------------------------' )
         print('' )
         
-        time.sleep(5)
+        time.sleep(Loop_Time)
 
 # WW-Speicher als Energie vernichter
 # kondstant auf 67 °C halten
