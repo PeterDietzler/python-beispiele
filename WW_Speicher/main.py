@@ -2,44 +2,10 @@ from shelly import shelly
 from iobroker import iobroker
 import time
 import os
+import json
 
-'''
-def getHostname(ip):
-    return socket.gethostbyaddr(ip)
 
-def getHostnameRange(ip):
-    res = ""
-    for i in range(1, 256):
-        
-        host_to_check = ip + str(i)
-        try:
-            host_check = socket.gethostbyaddr(host_to_check)
-            print( str(i) + " -> " + str(host_check))
-        except socket.herror:
-            #print 'Kein Dns-Eintrag für {}'.format(host_to_check)
-            pass
-        except socket.gaierror:
-            #print 'Fehlerhafte Eingabe bei den Netzwerkadressen!'
-            break
 
-#print(getHostname("192.168.188.27" ))
-
-#getHostnameRange("192.168.188.")
-
-IP_Heitzung = "http://192.168.188.36/status" # Heizung tempeaturen
-ip_Brauchwasser = "http://192.168.188.37/status" # Heizung tempeaturen
-
-r = requests.get(IP_Heitzung) # Daten abfragen
-
-data    = json.loads(r.content)    
-print('Data ==: ',str(data))
-print(" ")
-
-ssid  = data['wifi_sta']['ssid'] 
-ip    = data['wifi_sta']['ip'] 
-mac   = data['mac'] 
-
-'''
 def myPrint( text, level):
     local_time = time.localtime() # get struct_time
     time_string = time.strftime("%Y.%m.%d %H:%M:%S", local_time)
@@ -146,6 +112,33 @@ def set_Soco_Charger( power):
 def my_map(x, in_min, in_max, out_min, out_max):
     return int((x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min)
 
+
+
+
+def reset_log_files():
+    f = open("log/" + "PV_Energie_Wh.log", "w")
+    f.write( str(0.000) )  
+    f.close()
+  
+  
+    f = open("log/" + "HausEnergie_Export_Wh.log", "w")
+    f.write( str(0.000) )  
+    f.close()
+  
+    f = open("log/" + "HausEnergie_Verbrauch_Wh.log", "w")
+    f.write( str(0.000) )  
+    f.close()
+  
+    f = open("log/" + "HausEnergie_Import_Wh.log", "w")
+    f.write( str(0.0001) )  
+    f.close()
+  
+    f = open("log/" + "WW_Speicher_Energie_Wh.log", "w")
+    f.write( str(0.0001) )  
+    f.close()
+    
+
+
 def ueberschuss_laden():
 
     evu_Total_Power   ='http://iobroker01:8087/getPlainValue/node-red.0.EVU.TotalPower'
@@ -157,7 +150,6 @@ def ueberschuss_laden():
     ip_pcWohnzimmer = "192.168.188.35"
     ip_Heitzung     = "192.168.188.36" # Heizung tempeaturen
     ip_Brauchwasser = "192.168.188.37" # Heizung tempeaturen
-
 
     heitzung    = shelly(ip_Heitzung)
     bw_speicher = shelly(ip_Brauchwasser)
@@ -175,72 +167,171 @@ def ueberschuss_laden():
     Loop_Time = 5 # Sekunden
     Speicher_Lade_Leistung =0
     os.environ['TERM'] = 'xterm'
-    while True:
+    
+    #reset_log_files()
+
+  
+
+    
+    HausEnergie_Export_Wh = 0
+    HausEnergie_Import_Wh = 0
+    HausEnergie_Verbrauch_Wh = 0
+    WW_Speicher_Energie_Wh = 0.0
+    EVU_Netz_Bezug =0
+    EVU_Netz_exp_alt =0
+    seconds_alt =time.time()
+    myexit = False
+    
+    while (myexit == False):
+
         
         clearConsole()
-        
+        local_time = time.localtime() # get struct_time
+        _std = time.strftime("%H", local_time)
+        _min = time.strftime("%M", local_time)
+        _sec = time.strftime("%S", local_time)
+        #print(" h m s:",_std, _min,_sec)
+        if _std == '00' and _min == '00' and _sec > '00' and _sec < '10':
+            print(" reset_log_files():",_std, _min,_sec)
+            #"PV_Energie_Wh": PV_Energie_Wh
+            #HausEnergie_Export_Wh
+            #HausEnergie_Import_Wh
+            #HausEnergie_Verbrauch_Wh
+            #WW_Speicher_Energie_Wh
+            #EVU_Zähler
+            reset_log_files()
+            time.sleep(5)
+            
+            
 
+            
+
+    
+        get_value_start = time.time()
+
+        Aussen_temperatur      = heitzung.get_temperature( 0)
+        Kessel_temperatur      = heitzung.get_temperature( 1)
         temp            = heitzung.get_temperature( 2)
         PV_Leistung     = evu.get_raw( pv_power)*-1 
-        BW_Speicher_soc = my_map( temp, 40, 66, 0, 100)
+        BW_Speicher_soc = my_map( temp, 40, 68, 0, 100)
         EVU_Netz_Bezug  = evu.get_raw( evu_Total_Power)  # positiv(+) für Netzbezug, negativ(-) für Netzeinspeisung 
+       
+        get_value_time = time.time() - get_value_start
                                         
+
+        #get_value_start = time.time()
+
         EVU_Netz_Export = EVU_Netz_Bezug * -1.0
         
-        # EVU_Netz_exp ist der gdämpte export( Filter 1er Ordnung) 
-        EVU_Netz_exp =  EVU_Netz_exp_alt *0.95 + EVU_Netz_Export*0.05     
+        #EVU_Netz_exp ist der gdämpte export( Filter 1er Ordnung) 
+        EVU_Netz_exp =  EVU_Netz_exp_alt *0.9 + EVU_Netz_Export*0.1     
         EVU_Netz_exp_alt= EVU_Netz_exp
         
         PV_Leistung_filter =PV_Leistung_alt *0.9 + PV_Leistung*0.1
         PV_Leistung_alt = PV_Leistung_filter
         
+        Ueberschuss_Leistung = (EVU_Netz_exp) +Speicher_Lade_Leistung
+        #Ueberschuss_Leistung = PV_Leistung_filter
+
         
-        if (BW_Speicher_soc < 100):
-            if PV_Leistung_filter < 400:
-                set_Soco_Charger( 0)
-            
-            if PV_Leistung_filter < 800:
+        if (BW_Speicher_soc < 98):
+            #if temp <= 65.6 or Kessel_temperatur < 55:              
+            if Ueberschuss_Leistung < 900:
                 Speicher_Lade_Leistung = set_BW_Heizleistung( 0)
-            elif (PV_Leistung_filter > 1200) and (PV_Leistung_filter < 1900):
+            elif (Ueberschuss_Leistung > 1000) and (PV_Leistung_filter < 1950):
                 Speicher_Lade_Leistung = set_BW_Heizleistung( 1000)
-            elif (PV_Leistung_filter > 2200) and (PV_Leistung_filter < 2900):
+            elif (Ueberschuss_Leistung > 2000) and (PV_Leistung_filter < 2900):
                 Speicher_Lade_Leistung = set_BW_Heizleistung( 2000)
-            elif PV_Leistung_filter > 3100:
-                Speicher_Lade_Leistung = set_BW_Heizleistung( 3000)
+            elif Ueberschuss_Leistung > 3000:
+                    Speicher_Lade_Leistung = set_BW_Heizleistung( 3000)
         
         elif (BW_Speicher_soc >= 100) :
             Speicher_Lade_Leistung = set_BW_Heizleistung( 0 )
         
-        f = open("log/" + "SpeicherEnergie_Wh.log", "r")
-        SpeicherEnergie_Wh_alt = f.readline()  
+        f = open("log/" + "PV_Energie_Wh.log", "r")
+        PV_Energie_Wh_alt = f.readline()  
+        f.close()
+        PV_Energie_Wh = float(PV_Energie_Wh_alt) + (PV_Leistung*1.0 * Loop_Time*1.0) / 3600
+        f = open("log/" + "PV_Energie_Wh.log", "w")
+        f.write( str(PV_Energie_Wh) )  
         f.close()
         
-        SpeicherEnergie_Wh = float(SpeicherEnergie_Wh_alt) + (PV_Leistung*1.0 * Loop_Time*1.0) / 3600
-        
-        f = open("log/" + "SpeicherEnergie_Wh.log", "w")
-        f.write( str(SpeicherEnergie_Wh) )  
+
+        if EVU_Netz_Bezug > 0.000:
+            f = open("log/" + "HausEnergie_Import_Wh.log", "r")
+            HausEnergie_Import_Wh_alt = f.readline()  
+            f.close()
+            HausEnergie_Import_Wh = float(HausEnergie_Import_Wh_alt) + (EVU_Netz_Bezug*1.0 * Loop_Time*1.0) / 3600
+            f = open("log/" + "HausEnergie_Import_Wh.log", "w")
+            f.write( str(HausEnergie_Import_Wh) )  
+            f.close()
+        else:
+            f = open("log/" + "HausEnergie_Export_Wh.log", "r")
+            HausEnergie_Export_Wh_alt = f.readline()  
+            f.close()
+            HausEnergie_Export_Wh = float(HausEnergie_Export_Wh_alt) + (EVU_Netz_Bezug*-1.0 * Loop_Time*1.0) / 3600
+            f = open("log/" + "HausEnergie_Export_Wh.log", "w")
+            f.write( str(HausEnergie_Export_Wh) )  
+            f.close()
+
+
+        f = open("log/" + "HausEnergie_Verbrauch_Wh.log", "r")
+        HausEnergie_Verbrauch_Wh_alt = f.readline()  
         f.close()
+        HausEnergie_Verbrauch_Wh = float(HausEnergie_Verbrauch_Wh_alt) + (PV_Leistung + EVU_Netz_Bezug) * Loop_Time / 3600.0
+        f = open("log/" + "HausEnergie_Verbrauch_Wh.log", "w")
+        f.write( str(HausEnergie_Verbrauch_Wh) )  
+        f.close()
+        
+       
+       
+       
+        f = open("log/" + "WW_Speicher_Energie_Wh.log", "r")
+        WW_Speicher_Energie_Wh_alt = f.readline()
+        f.close()
+        #print("WW_Speicher_Energie_Wh_alt :", WW_Speicher_Energie_Wh_alt)
+        WW_Speicher_Energie_Wh = float(WW_Speicher_Energie_Wh_alt) + Speicher_Lade_Leistung * Loop_Time / 3600.0
+        #f = open("log/" + "WW_Speicher_Energie_Wh.log", "w")
+        f = open("log/" + "WW_Speicher_Energie_Wh.log", "w")
+        f.write( str(WW_Speicher_Energie_Wh) )  
+        f.close()
+        
+        f = open("log/" + "EVU_Zähler.log", "r")
+        EVU_Zähler_alt = f.readline()
+        f.close()
+        EVU_Zähler = float(EVU_Zähler_alt) + EVU_Netz_Bezug * Loop_Time /3600.0
+        f = open("log/" + "EVU_Zähler.log", "w")
+        f.write( str(EVU_Zähler) )  
+        f.close()
+        
+        #get_value_time = time.time() - get_value_start
         
         
         # seconds passed since epoch
         seconds = time.time()
+        Loop_Time = Loop_delay = seconds - seconds_alt
+        print("Loop_delay:", Loop_delay)    
+        print("get_value_time:", get_value_time)
+        seconds_alt =seconds
+        
+        
         local_time = time.ctime(seconds)
         print('Warm-Wasser-Speicher PV-Überschuß Ladereglung ' )    
         print(local_time)    
-        print('-------------------------------------------------------------' )
-        print("|     PV ges.   : %4.0dW      |    PV_filter.   : %4.0fW" % (PV_Leistung, PV_Leistung_filter ))
-        print('-------------------------------------------------------------' )
-        print("|     PV_Eenrgie:   %dWh                                            "% SpeicherEnergie_Wh)
-        print('-------------------------------------------------------------' )
-        print("|     Haus verb.: %4.0dW      |    Netz_imp.   : %4.0fW" % (PV_Leistung + EVU_Netz_Bezug-Speicher_Lade_Leistung , EVU_Netz_Bezug ))
-        print('-------------------------------------------------------------' )
-        print("|     WW Power  : %4.0dW      |    Netz(Filter): %4.0fW" % (Speicher_Lade_Leistung, EVU_Netz_exp))
-        print('-------------------------------------------------------------' )
+        print('---------------------------------------------------------------------' )
+        print("|     PV ges.   : %4.0dW (%4.3fkWh)     |    PV_filter.   : %4.0fW" % (PV_Leistung, (PV_Energie_Wh/1000.0),PV_Leistung_filter ))
+        print('---------------------------------------------------------------------' )
+        print("|     Haus      : %4.0dW (imp. %4.3fkWh | exp. %4.3fkWh)" % ((EVU_Netz_Bezug), (HausEnergie_Import_Wh/1000.0), (HausEnergie_Export_Wh/1000.0)))
+        print('---------------------------------------------------------------------' )
+        print("|     Haus verb.: %4.0dW ( %4.3fkWh)    | EVU-Zähler( %4.3fkWh))" % ((PV_Leistung + EVU_Netz_Bezug), (HausEnergie_Verbrauch_Wh/1000.0),EVU_Zähler/1000.0 ) )
+        print('---------------------------------------------------------------------' )
+        print("|     WW Power  : %4.0dW ( %4.3fkWh)     |    Netz(Filter): %4.0fW" % (Speicher_Lade_Leistung, WW_Speicher_Energie_Wh/1000.0, EVU_Netz_exp))
+        print('---------------------------------------------------------------------' )
         print("|     WW SoC    : %2.0d%%       |    WW Temp     : %2.2f°C" % (BW_Speicher_soc, temp))
-        print('-------------------------------------------------------------' )
+        print('---------------------------------------------------------------------' )
         print('' )
         
-        time.sleep(Loop_Time)
+        time.sleep(5)
 
 # WW-Speicher als Energie vernichter
 # kondstant auf 67 °C halten
