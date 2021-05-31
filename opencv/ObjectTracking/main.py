@@ -119,14 +119,28 @@ while True:
         # Calculate area and remove small elements
         area = cv2.contourArea(cnt)
         #print(area)
+        if x > 90 and x < 1250:
+            if y > 120 and y < 330:
+                if 500 < area < 1200:
+                    if w < 100 and w > 70:
+                        if h < 20 and h > 10:
+                            cv2.polylines( roi_frame, [cnt], True, (0,255,0), 1)#grüner Rahmen
+                            #cv2.drawContours( roi_frame, [cnt], -1, (0, 255, 0), 1)         #grün#
+                            #v2.rectangle(roi_frame, (x, y), (x + w, y + h), (0, 255, 0), 1)
+                            #print(cnt)
+                            #print( x, y, w, h )
+                            pass
+                
+        '''        
         if 600 < area < 1100:
-            print(area)
+            #print(area)
+            print(x, y, w, h)
             #cv2.drawContours( roi_frame, [cnt], -1, (0, 255, 0), 3)          #grün     
             #cv2.rectangle(roi_frame, (x, y), (x + w, y + h), (255, 0, 0), 1)
             cv2.polylines( roi_frame, [cnt], True, (0,255,0), 2)#grüner Rahmen
             #cv2.polylines( roi_frame, [cnt], True, (0,0,255), 2) #roter Rahmen
             pass
-
+        '''    
 
     draw.add_text_top_left(roi_frame ,text)
  
