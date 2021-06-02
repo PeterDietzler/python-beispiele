@@ -230,13 +230,24 @@ def ueberschuss_laden():
         PV_Leistung_filter =PV_Leistung_alt *0.9 + PV_Leistung*0.1
         PV_Leistung_alt = PV_Leistung_filter
         
-        Ueberschuss_Leistung = (EVU_Netz_exp) +Speicher_Lade_Leistung
-        #Ueberschuss_Leistung = PV_Leistung_filter
-
+        if EVU_Netz_exp > 0:
+            Ueberschuss_Leistung = (EVU_Netz_exp) +Speicher_Lade_Leistung
+        else:
+            Ueberschuss_Leistung =0;
         
-        if (BW_Speicher_soc < 98):
+        
+        #Ueberschuss_Leistung = PV_Leistung_filter
+        
+        
+        
+        if (Aussen_temperatur > 21.0):
+            soc_max = 90
+        else:
+            soc_max = 98
+        
+        if (BW_Speicher_soc < soc_max):
             #if temp <= 65.6 or Kessel_temperatur < 55:              
-            if Ueberschuss_Leistung < 900:
+            if Ueberschuss_Leistung < 900 or Ueberschuss_Leistung < 0:
                 Speicher_Lade_Leistung = set_BW_Heizleistung( 0)
             elif (Ueberschuss_Leistung > 1000) and (PV_Leistung_filter < 1950):
                 Speicher_Lade_Leistung = set_BW_Heizleistung( 1000)
@@ -245,7 +256,7 @@ def ueberschuss_laden():
             elif Ueberschuss_Leistung > 3000:
                     Speicher_Lade_Leistung = set_BW_Heizleistung( 3000)
         
-        elif (BW_Speicher_soc >= 100) :
+        elif (BW_Speicher_soc >= 100) or (BW_Speicher_soc > soc_max):
             Speicher_Lade_Leistung = set_BW_Heizleistung( 0 )
         
         f = open("log/" + "PV_Energie_Wh.log", "r")
