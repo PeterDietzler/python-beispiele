@@ -3,6 +3,7 @@ from iobroker import iobroker
 import time
 import os
 import json
+import string
 
 
 
@@ -136,7 +137,7 @@ def reset_log_files():
     f = open("log/" + "WW_Speicher_Energie_Wh.log", "w")
     f.write( str(0.0001) )  
     f.close()
-    
+
 
 
 def ueberschuss_laden():
@@ -180,8 +181,9 @@ def ueberschuss_laden():
     EVU_Netz_Bezug =0
     EVU_Netz_exp_alt =0
     seconds_alt =time.time()
+    EVU_Zähler=0
     myexit = False
-    
+    PV_Energie_Wh =0
     while (myexit == False):
 
         
@@ -190,30 +192,53 @@ def ueberschuss_laden():
         _std = time.strftime("%H", local_time)
         _min = time.strftime("%M", local_time)
         _sec = time.strftime("%S", local_time)
-        #print(" h m s:",_std, _min,_sec)
-        if _std == '00' and _min == '00' and _sec > '00' and _sec < '10':
+        _day = time.strftime("%d", local_time)
+        _month = time.strftime("%m", local_time)
+        _jahr = time.strftime("%Y", local_time)
+        _date = time.strftime("%Y%m%d", local_time)
+        # Monatlich in s yearly Verzeichnis
+   
+        # TODO
+   
+        # Täglich daten wegschreiben
+        if _std == '23' and _min == '59' and _sec > '50' and _sec < '59':
             print(" reset_log_files():",_std, _min,_sec)
-            #"PV_Energie_Wh": PV_Energie_Wh
-            #HausEnergie_Export_Wh
-            #HausEnergie_Import_Wh
-            #HausEnergie_Verbrauch_Wh
-            #WW_Speicher_Energie_Wh
-            #EVU_Zähler
+            
+            # Schriebe die Daten in Datei            
+            f = open("log/logging/monthly/" + _jahr + _month +".csv", "a+")
+            output =[ EVU_Zähler, HausEnergie_Verbrauch_Wh, PV_Energie_Wh, HausEnergie_Export_Wh, HausEnergie_Import_Wh, WW_Speicher_Energie_Wh] 
+            f.write( _date  )  
+            for value in output:
+                f.write( ", %d" % (value) )  
+            f.write( "\n" )  
+            f.close()
+
             reset_log_files()
+            HausEnergie_Export_Wh = 0.0
+            HausEnergie_Import_Wh = 0.0 
             time.sleep(5)
             
-            
+        # alle 5 Minuten daten schreiben
+        if  ((int(_min) % 5) == 0) and _sec > '00' and _sec < '09':
+            # Schriebe die Daten in Datei            
+            f = open("log/logging/dayly/" + _date +".csv", "a+")
+            output =[ EVU_Zähler, HausEnergie_Verbrauch_Wh, PV_Energie_Wh, HausEnergie_Export_Wh, HausEnergie_Import_Wh, WW_Speicher_Energie_Wh] 
+            f.write( _std + _min  )  
+            for value in output:
+                f.write( ", %d"% (value) )  
+            f.write( "\n" )  
+            f.close()
+            time.sleep(5)
+        # write_dayly_csv_file( path_file, var_list)    
+        # write_5min_csv_file( path_file, var_list)    
 
-            
-
-    
         get_value_start = time.time()
 
         Aussen_temperatur      = heitzung.get_temperature( 0)
         Kessel_temperatur      = heitzung.get_temperature( 1)
-        temp            = heitzung.get_temperature( 2)
+        WarmwasserSpeicher_temperatur  = heitzung.get_temperature( 2)
         PV_Leistung     = evu.get_raw( pv_power)*-1 
-        BW_Speicher_soc = my_map( temp, 40, 68, 0, 100)
+        BW_Speicher_soc = my_map( WarmwasserSpeicher_temperatur, 40, 68, 0, 100)
         EVU_Netz_Bezug  = evu.get_raw( evu_Total_Power)  # positiv(+) für Netzbezug, negativ(-) für Netzeinspeisung 
        
         get_value_time = time.time() - get_value_start
@@ -241,22 +266,25 @@ def ueberschuss_laden():
         
         
         if (Aussen_temperatur > 21.0):
-            soc_max = 90
+            soc_max = 88
         else:
             soc_max = 98
         
-        if (BW_Speicher_soc < soc_max):
+        if (WarmwasserSpeicher_temperatur < 63.0):
             #if temp <= 65.6 or Kessel_temperatur < 55:              
             if Ueberschuss_Leistung < 900 or Ueberschuss_Leistung < 0:
                 Speicher_Lade_Leistung = set_BW_Heizleistung( 0)
-            elif (Ueberschuss_Leistung > 1000) and (PV_Leistung_filter < 1950):
+                
+            elif (Ueberschuss_Leistung > 1100) and (Ueberschuss_Leistung < 1950):
                 Speicher_Lade_Leistung = set_BW_Heizleistung( 1000)
-            elif (Ueberschuss_Leistung > 2000) and (PV_Leistung_filter < 2900):
+                
+            elif (Ueberschuss_Leistung > 2200) and (Ueberschuss_Leistung < 2900):
                 Speicher_Lade_Leistung = set_BW_Heizleistung( 2000)
+                
             elif Ueberschuss_Leistung > 3000:
                     Speicher_Lade_Leistung = set_BW_Heizleistung( 3000)
         
-        elif (BW_Speicher_soc >= 100) or (BW_Speicher_soc > soc_max):
+        elif (WarmwasserSpeicher_temperatur > 65.0):
             Speicher_Lade_Leistung = set_BW_Heizleistung( 0 )
         
         f = open("log/" + "PV_Energie_Wh.log", "r")
@@ -336,9 +364,9 @@ def ueberschuss_laden():
         print('---------------------------------------------------------------------' )
         print("|     Haus verb.: %4.0dW ( %4.3fkWh)    | EVU-Zähler( %4.3fkWh))" % ((PV_Leistung + EVU_Netz_Bezug), (HausEnergie_Verbrauch_Wh/1000.0),EVU_Zähler/1000.0 ) )
         print('---------------------------------------------------------------------' )
-        print("|     WW Power  : %4.0dW ( %4.3fkWh)     |    Netz(Filter): %4.0fW" % (Speicher_Lade_Leistung, WW_Speicher_Energie_Wh/1000.0, EVU_Netz_exp))
+        print("|     WW Power  : %4.0dW ( %4.3fkWh)    |    Ueberschuß %4.0fW" % (Speicher_Lade_Leistung, WW_Speicher_Energie_Wh/1000.0, Ueberschuss_Leistung))
         print('---------------------------------------------------------------------' )
-        print("|     WW SoC    : %2.0d%%       |    WW Temp     : %2.2f°C" % (BW_Speicher_soc, temp))
+        print("|     WW SoC    : %2.0d%%               |    WW Temp     : %2.2f°C" % (BW_Speicher_soc, WarmwasserSpeicher_temperatur))
         print('---------------------------------------------------------------------' )
         print('' )
         
@@ -462,3 +490,46 @@ def maximal_laden():
 
 ueberschuss_laden()
 #maximal_laden()
+
+
+def main():
+    
+    # Lade SystemHardware.json
+     
+    
+    EVU_Zaehlerstand_2020 = 30248.0 # KWH 16 Juni 2020
+    EVU_Zaehlerstand_2021 = 32088.0 # KWH  1 Juni 2121
+    
+    
+    
+    while True:
+        
+        
+        mySTATE = 'SommerBetrieb'
+ 
+ 
+        # TODO
+        # 1. Was ist Billiger? WW mit Heizung oder elektrisch
+        #    - 1 KWh EVU-Bezug kosten 30 Cent == 30 Minuten Gas Kessel
+        #    -  
+        # 2. Hat WW-Speicher immer vorrang?
+        
+        
+        if mySTATE == 'SommerBetrieb':
+            # WW-Speicher mit Strom aus PV-Überschuss und der rest mit EVU Bezug.
+            # Die Heizung soll nicht anspringen
+            pass
+        
+        if mySTATE == 'SommerBetrieb_Überschuss':
+            # WW-Speicher nur mit Strom aus PV-Überschuss.
+            # Wenn es nicht reicht geht die Heizung an.
+            pass
+ 
+        
+        elif mySTATE == 'StromHeizen':
+            # 3. Heizen mit Elektrisch.
+            pass
+
+        
+
+
