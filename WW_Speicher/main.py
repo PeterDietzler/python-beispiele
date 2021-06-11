@@ -4,7 +4,7 @@ import time
 import os
 import json
 import string
-
+from collections import deque
 
 
 def myPrint( text, level):
@@ -138,6 +138,45 @@ def reset_log_files():
     f.write( str(0.0001) )  
     f.close()
 
+def write_had_line_to_file( filename, string_list, seperator):
+    with open(filename, "a+") as f:
+        i=0
+        for value in string_list:
+            if i ==0:
+                f.write( "%s"% (value) )  # erstes feld ohne seperator
+            else:
+                f.write( "%s%s"% (seperator, value) )  
+            i +=1
+        f.write( "\n" )  
+
+
+
+def get_last_line_from_file( filename, string_list, seperator):
+    'Return the last n lines of a file'
+    #with open(filename) as f:
+    #    return deque(f, 1) 
+    try:
+        with open(filename, "r") as ext_file:
+            for line in ext_file:
+                string_list = line.split( seperator)
+    except:
+        pass
+    return string_list
+
+def write_line_to_file( filename, string_list, seperator):
+    # string_list = [1545, 32059308, 7548, 9753, 3334, 1129, 3957]
+    # Schriebe die Daten in Datei            
+    with open(filename, "a+") as f:
+        i=0
+        for value in string_list:
+            if i ==0:
+                f.write( "%s"% str(value) )  # erstes feld ohne seperator
+            else:
+                f.write( "%s%d"% (seperator, value) )  
+            i +=1
+        f.write( "\n" )  
+    
+
 
 
 def ueberschuss_laden():
@@ -169,21 +208,52 @@ def ueberschuss_laden():
     Speicher_Lade_Leistung =0
     os.environ['TERM'] = 'xterm'
     
-    #reset_log_files()
-
-  
-
-    
-    HausEnergie_Export_Wh = 0
-    HausEnergie_Import_Wh = 0
-    HausEnergie_Verbrauch_Wh = 0
-    WW_Speicher_Energie_Wh = 0.0
+    seconds_alt =time.time()
     EVU_Netz_Bezug =0
     EVU_Netz_exp_alt =0
-    seconds_alt =time.time()
-    EVU_Zähler=0
     myexit = False
+
+    current_Time =0
+    EVU_Zähler=0
+    HausEnergie_Verbrauch_Wh = 0
     PV_Energie_Wh =0
+    HausEnergie_Export_Wh = 0
+    HausEnergie_Import_Wh = 0
+    WW_Speicher_Energie_Wh = 0.0
+    
+    output =[ current_Time, EVU_Zähler, HausEnergie_Verbrauch_Wh, PV_Energie_Wh, HausEnergie_Export_Wh,
+              HausEnergie_Import_Wh, WW_Speicher_Energie_Wh] 
+
+    seconds_alt =time.time()
+
+    local_time = time.localtime() # get struct_time
+    _date = time.strftime("%Y%m%d", local_time)
+
+    i = 0
+    for val in output:
+        output[i] = 0
+        i += 1
+
+    
+    last_line = ( get_last_line_from_file( "log/logging/dayly/" + _date +".csv", output, ','))
+    print(last_line)    
+    
+    
+    i = 0
+    for val in last_line:
+        if type(val) is str:
+            output[i] = int(val)
+
+        i += 1
+        print(i, output)
+    
+    EVU_Zähler_alt               = EVU_Zähler        
+    HausEnergie_Verbrauch_Wh_alt = HausEnergie_Verbrauch_Wh        
+    PV_Energie_Wh_alt            = PV_Energie_Wh   
+    HausEnergie_Export_Wh_alt    = HausEnergie_Export_Wh
+    HausEnergie_Import_Wh_alt    = HausEnergie_Import_Wh
+    WW_Speicher_Energie_Wh_alt   = WW_Speicher_Energie_Wh
+
     while (myexit == False):
 
         
@@ -196,41 +266,32 @@ def ueberschuss_laden():
         _month = time.strftime("%m", local_time)
         _jahr = time.strftime("%Y", local_time)
         _date = time.strftime("%Y%m%d", local_time)
-        # Monatlich in s yearly Verzeichnis
-   
-        # TODO
-   
-        # Täglich daten wegschreiben
-        if _std == '23' and _min == '59' and _sec > '50' and _sec < '59':
-            print(" reset_log_files():",_std, _min,_sec)
-            
-            # Schriebe die Daten in Datei            
-            f = open("log/logging/monthly/" + _jahr + _month +".csv", "a+")
-            output =[ EVU_Zähler, HausEnergie_Verbrauch_Wh, PV_Energie_Wh, HausEnergie_Export_Wh, HausEnergie_Import_Wh, WW_Speicher_Energie_Wh] 
-            f.write( _date  )  
-            for value in output:
-                f.write( ", %d" % (value) )  
-            f.write( "\n" )  
-            f.close()
 
-            reset_log_files()
-            HausEnergie_Export_Wh = 0.0
-            HausEnergie_Import_Wh = 0.0 
+        current_Time =  _std + _min     
+
+        # Täglich daten in monthly verzeichnis wegschreiben
+        if _std == '23' and _min == '59' and _sec > '50' and _sec < '59':
+            output[0]=  _date
+            # Schriebe die Daten in Datei            
+            filenane = open("log/logging/monthly/" + _jahr + _month +".csv", "a+")
+            write_line_to_file( filename, output, ',')
             time.sleep(5)
             
-        # alle 5 Minuten daten schreiben
-        if  ((int(_min) % 5) == 0) and _sec > '00' and _sec < '09':
-            # Schriebe die Daten in Datei            
-            f = open("log/logging/dayly/" + _date +".csv", "a+")
-            output =[ EVU_Zähler, HausEnergie_Verbrauch_Wh, PV_Energie_Wh, HausEnergie_Export_Wh, HausEnergie_Import_Wh, WW_Speicher_Energie_Wh] 
-            f.write( _std + _min  )  
-            for value in output:
-                f.write( ", %d"% (value) )  
-            f.write( "\n" )  
-            f.close()
+        # tägliche datei neu anlegn
+        if  ( (int(_std) == 0) and (int(_min) == 0) ) and _sec >= '00' and _sec < '09':
+            filename = "log/logging/dayly/" + _date + ".csv"
+            write_had_line_to_file( filename, output, ',')
             time.sleep(5)
-        # write_dayly_csv_file( path_file, var_list)    
-        # write_5min_csv_file( path_file, var_list)    
+
+
+
+        # alle 5 Minuten daten schreiben
+        if  ( ((int(_min) % 5) == 0) or (int(_min) == 0) ) and _sec >= '00' and _sec < '09':
+            # Schriebe die Daten in Datei
+            output[0] =  _std + _min   # current_time    
+            filename = "log/logging/dayly/" + _date + ".csv"
+            write_line_to_file( filename, output, ',')
+            time.sleep(5)
 
         get_value_start = time.time()
 
@@ -256,19 +317,9 @@ def ueberschuss_laden():
         PV_Leistung_alt = PV_Leistung_filter
         
         if EVU_Netz_exp > 0:
-            Ueberschuss_Leistung = (EVU_Netz_exp) +Speicher_Lade_Leistung
+            Ueberschuss_Leistung = (EVU_Netz_exp) + Speicher_Lade_Leistung
         else:
             Ueberschuss_Leistung =0;
-        
-        
-        #Ueberschuss_Leistung = PV_Leistung_filter
-        
-        
-        
-        if (Aussen_temperatur > 21.0):
-            soc_max = 88
-        else:
-            soc_max = 98
         
         if (WarmwasserSpeicher_temperatur < 63.0):
             #if temp <= 65.6 or Kessel_temperatur < 55:              
@@ -287,73 +338,31 @@ def ueberschuss_laden():
         elif (WarmwasserSpeicher_temperatur > 65.0):
             Speicher_Lade_Leistung = set_BW_Heizleistung( 0 )
         
-        f = open("log/" + "PV_Energie_Wh.log", "r")
-        PV_Energie_Wh_alt = f.readline()  
-        f.close()
         PV_Energie_Wh = float(PV_Energie_Wh_alt) + (PV_Leistung*1.0 * Loop_Time*1.0) / 3600
-        f = open("log/" + "PV_Energie_Wh.log", "w")
-        f.write( str(PV_Energie_Wh) )  
-        f.close()
+        PV_Energie_Wh_alt = PV_Energie_Wh
         
 
         if EVU_Netz_Bezug > 0.000:
-            f = open("log/" + "HausEnergie_Import_Wh.log", "r")
-            HausEnergie_Import_Wh_alt = f.readline()  
-            f.close()
             HausEnergie_Import_Wh = float(HausEnergie_Import_Wh_alt) + (EVU_Netz_Bezug*1.0 * Loop_Time*1.0) / 3600
-            f = open("log/" + "HausEnergie_Import_Wh.log", "w")
-            f.write( str(HausEnergie_Import_Wh) )  
-            f.close()
+            HausEnergie_Import_Wh_alt = HausEnergie_Import_Wh
         else:
-            f = open("log/" + "HausEnergie_Export_Wh.log", "r")
-            HausEnergie_Export_Wh_alt = f.readline()  
-            f.close()
             HausEnergie_Export_Wh = float(HausEnergie_Export_Wh_alt) + (EVU_Netz_Bezug*-1.0 * Loop_Time*1.0) / 3600
-            f = open("log/" + "HausEnergie_Export_Wh.log", "w")
-            f.write( str(HausEnergie_Export_Wh) )  
-            f.close()
+            HausEnergie_Export_Wh_alt = HausEnergie_Export_Wh
+ 
 
-
-        f = open("log/" + "HausEnergie_Verbrauch_Wh.log", "r")
-        HausEnergie_Verbrauch_Wh_alt = f.readline()  
-        f.close()
         HausEnergie_Verbrauch_Wh = float(HausEnergie_Verbrauch_Wh_alt) + (PV_Leistung + EVU_Netz_Bezug) * Loop_Time / 3600.0
-        f = open("log/" + "HausEnergie_Verbrauch_Wh.log", "w")
-        f.write( str(HausEnergie_Verbrauch_Wh) )  
-        f.close()
-        
+        HausEnergie_Verbrauch_Wh_alt = HausEnergie_Verbrauch_Wh
        
-       
-       
-        f = open("log/" + "WW_Speicher_Energie_Wh.log", "r")
-        WW_Speicher_Energie_Wh_alt = f.readline()
-        f.close()
-        #print("WW_Speicher_Energie_Wh_alt :", WW_Speicher_Energie_Wh_alt)
         WW_Speicher_Energie_Wh = float(WW_Speicher_Energie_Wh_alt) + Speicher_Lade_Leistung * Loop_Time / 3600.0
-        #f = open("log/" + "WW_Speicher_Energie_Wh.log", "w")
-        f = open("log/" + "WW_Speicher_Energie_Wh.log", "w")
-        f.write( str(WW_Speicher_Energie_Wh) )  
-        f.close()
+        WW_Speicher_Energie_Wh_alt = WW_Speicher_Energie_Wh
         
-        f = open("log/" + "EVU_Zähler.log", "r")
-        EVU_Zähler_alt = f.readline()
-        f.close()
         EVU_Zähler = float(EVU_Zähler_alt) + EVU_Netz_Bezug * Loop_Time /3600.0
-        f = open("log/" + "EVU_Zähler.log", "w")
-        f.write( str(EVU_Zähler) )  
-        f.close()
-        
-        #get_value_time = time.time() - get_value_start
-        
-        
-        # seconds passed since epoch
+        EVU_Zähler_alt = EVU_Zähler
+ 
         seconds = time.time()
         Loop_Time = Loop_delay = seconds - seconds_alt
-        print("Loop_delay:", Loop_delay)    
-        print("get_value_time:", get_value_time)
         seconds_alt =seconds
-        
-        
+        print("Loop_delay:", Loop_delay)    
         local_time = time.ctime(seconds)
         print('Warm-Wasser-Speicher PV-Überschuß Ladereglung ' )    
         print(local_time)    
@@ -533,3 +542,4 @@ def main():
         
 
 
+ 
