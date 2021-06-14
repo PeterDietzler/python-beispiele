@@ -170,13 +170,38 @@ def write_line_to_file( filename, string_list, seperator):
         i=0
         for value in string_list:
             if i ==0:
-                f.write( "%s"% str(value) )  # erstes feld ohne seperator
+                f.write( "%s"% str (value) )  # erstes feld ohne seperator
             else:
                 f.write( "%s%d"% (seperator, value) )  
             i +=1
         f.write( "\n" )  
     
+def SommerBetrieb():
+    
+    evu_Total_Power   ='http://iobroker01:8087/getPlainValue/node-red.0.EVU.TotalPower'
+    evu_energie       ='http://iobroker01:8087/getPlainValue/node-red.0.Haus.TotalEnergie'
+    evu_ret_energie   ='http://iobroker01:8087/getPlainValue/node-red.0.EVU.EnergieReturned'
+    pv_power          ='http://iobroker01:8087/getPlainValue/node-red.0.PV.Power'
+    pv_energie        ='http://iobroker01:8087/getPlainValue/node-red.0.PV.TotalEnergie'
+    bwPumpe           ='http://iobroker01:8087/getPlainValue/node-red.0.Heizung.BrauchwasserPumpe'
+    ip_pcWohnzimmer = "192.168.188.35"
+    ip_Heitzung     = "192.168.188.36" # Heizung tempeaturen
+    ip_Brauchwasser = "192.168.188.37" # Heizung tempeaturen
 
+    heitzung    = shelly(ip_Heitzung)
+    bw_speicher = shelly(ip_Brauchwasser)
+    pc_wohnzimmer= shelly(ip_pcWohnzimmer)
+
+    evu = iobroker()
+    
+    BW_Speicher_Heizung = 0
+    Aktueller_Eigenverbarauch = 0
+    PV_Leistung = 0
+
+    Aussen_temperatur      = heitzung.get_temperature( 0)
+    Kessel_temperatur      = heitzung.get_temperature( 1)
+    WarmwasserSpeicher_temperatur  = heitzung.get_temperature( 2)
+    
 
 
 def ueberschuss_laden():
@@ -321,7 +346,7 @@ def ueberschuss_laden():
         else:
             Ueberschuss_Leistung =0;
         
-        if (WarmwasserSpeicher_temperatur < 63.0):
+        if (WarmwasserSpeicher_temperatur < 68.0):
             #if temp <= 65.6 or Kessel_temperatur < 55:              
             if Ueberschuss_Leistung < 900 or Ueberschuss_Leistung < 0:
                 Speicher_Lade_Leistung = set_BW_Heizleistung( 0)
@@ -334,8 +359,9 @@ def ueberschuss_laden():
                 
             elif Ueberschuss_Leistung > 3000:
                     Speicher_Lade_Leistung = set_BW_Heizleistung( 3000)
+            
         
-        elif (WarmwasserSpeicher_temperatur > 65.0):
+        elif (WarmwasserSpeicher_temperatur > 70.0):
             Speicher_Lade_Leistung = set_BW_Heizleistung( 0 )
         
         PV_Energie_Wh = float(PV_Energie_Wh_alt) + (PV_Leistung*1.0 * Loop_Time*1.0) / 3600
@@ -367,15 +393,15 @@ def ueberschuss_laden():
         print('Warm-Wasser-Speicher PV-Überschuß Ladereglung ' )    
         print(local_time)    
         print('---------------------------------------------------------------------' )
-        print("|     PV ges.   : %4.0dW (%4.3fkWh)     |    PV_filter.   : %4.0fW" % (PV_Leistung, (PV_Energie_Wh/1000.0),PV_Leistung_filter ))
+        print("| PV ges.   : %4.0d W (%4.3f kWh)     | PV_filter.  : %4.0f W" % (PV_Leistung, (PV_Energie_Wh/1000.0),PV_Leistung_filter ))
         print('---------------------------------------------------------------------' )
-        print("|     Haus      : %4.0dW (imp. %4.3fkWh | exp. %4.3fkWh)" % ((EVU_Netz_Bezug), (HausEnergie_Import_Wh/1000.0), (HausEnergie_Export_Wh/1000.0)))
+        print("| Haus verb.: %4.0d W ( %4.3f kWh)    | EVU-Zähler  : %4.1f kWh)" % ((PV_Leistung + EVU_Netz_Bezug), (HausEnergie_Verbrauch_Wh/1000.0),EVU_Zähler/1000.0 ) )
         print('---------------------------------------------------------------------' )
-        print("|     Haus verb.: %4.0dW ( %4.3fkWh)    | EVU-Zähler( %4.3fkWh))" % ((PV_Leistung + EVU_Netz_Bezug), (HausEnergie_Verbrauch_Wh/1000.0),EVU_Zähler/1000.0 ) )
+        print("| Haus      : %4.0d W (imp. %4.3f Wh | exp. %4.3f Wh) (-> %4.0f W)" % ((EVU_Netz_Bezug), (HausEnergie_Import_Wh/1000.0), (HausEnergie_Export_Wh/1000.0),  Ueberschuss_Leistung))
         print('---------------------------------------------------------------------' )
-        print("|     WW Power  : %4.0dW ( %4.3fkWh)    |    Ueberschuß %4.0fW" % (Speicher_Lade_Leistung, WW_Speicher_Energie_Wh/1000.0, Ueberschuss_Leistung))
+        print("| WW Power  : %4.0d W ( %4.3f kWh)    | " % (Speicher_Lade_Leistung, WW_Speicher_Energie_Wh/1000.0))
         print('---------------------------------------------------------------------' )
-        print("|     WW SoC    : %2.0d%%               |    WW Temp     : %2.2f°C" % (BW_Speicher_soc, WarmwasserSpeicher_temperatur))
+        print("| WW SoC    :   %2.0d %%                | WW Temp     : %2.1f°C" % (BW_Speicher_soc, WarmwasserSpeicher_temperatur))
         print('---------------------------------------------------------------------' )
         print('' )
         
@@ -497,24 +523,24 @@ def maximal_laden():
     
 
 
-ueberschuss_laden()
+#ueberschuss_laden()
 #maximal_laden()
 
 
-def main():
+def main( mySTATE):
     
     # Lade SystemHardware.json
      
     
     EVU_Zaehlerstand_2020 = 30248.0 # KWH 16 Juni 2020
-    EVU_Zaehlerstand_2021 = 32088.0 # KWH  1 Juni 2121
+    EVU_Zaehlerstand_2021 = 32083.0 # KWH  1 Juni 2121
     
     
     
     while True:
         
         
-        mySTATE = 'SommerBetrieb'
+        #mySTATE = 'SommerBetrieb'
  
  
         # TODO
@@ -527,11 +553,13 @@ def main():
         if mySTATE == 'SommerBetrieb':
             # WW-Speicher mit Strom aus PV-Überschuss und der rest mit EVU Bezug.
             # Die Heizung soll nicht anspringen
+            SommerBetrieb()
             pass
         
         if mySTATE == 'SommerBetrieb_Überschuss':
             # WW-Speicher nur mit Strom aus PV-Überschuss.
             # Wenn es nicht reicht geht die Heizung an.
+            ueberschuss_laden()
             pass
  
         
@@ -539,7 +567,7 @@ def main():
             # 3. Heizen mit Elektrisch.
             pass
 
-        
-
+#main( 'SommerBetrieb' )
+main( 'SommerBetrieb_Überschuss')
 
  

@@ -26,7 +26,7 @@ class shelly:
         
     def get_temperature(self, channel):
         #print('get_temperature()')
-        if channel>= 0 and channel <= 2:
+        if channel >= 0 and channel <= 2:
             self.read_status()
             if self.data == 0:
                 return 0
