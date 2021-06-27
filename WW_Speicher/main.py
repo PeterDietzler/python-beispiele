@@ -41,7 +41,15 @@ def static_vars(**kwargs):
             setattr(func, k, kwargs[k])
         return func
     return decorate    
+def get_BW_Heizleistung():
+    ip_1KW = "192.168.188.60" # Shelly 1PM Heizung 1kW
+    ip_2KW = "192.168.188.52" # Shelly 1PM Heizung 2kW
     
+    Heizstab_1000W = shelly(ip_1KW)
+    Heizstab_2000W = shelly(ip_2KW)
+    return (Heizstab_1000W.get_power(0) + Heizstab_2000W.get_power(0))
+ 
+ 
 # EVU_Netz_export ==>> positiv(+) für Netzeinspeisung Netzbezug, negativ(-) für  Netzbezug
 #
 def set_BW_Heizleistung( EVU_Netz_export ): # aktuell freie leistung 
@@ -55,7 +63,8 @@ def set_BW_Heizleistung( EVU_Netz_export ): # aktuell freie leistung
     Heizstab_2000W = shelly(ip_2KW)
 
     
-    akt_Power = Heizstab_1000W.get_power(0) + Heizstab_2000W.get_power(0)
+    #akt_Power = Heizstab_1000W.get_power(0) + Heizstab_2000W.get_power(0)
+    akt_Power = get_BW_Heizleistung()
     
     
     #if EVU_Netz_export - akt_Power <=10:
@@ -178,29 +187,32 @@ def write_line_to_file( filename, string_list, seperator):
     
 def SommerBetrieb():
     
-    evu_Total_Power   ='http://iobroker01:8087/getPlainValue/node-red.0.EVU.TotalPower'
-    evu_energie       ='http://iobroker01:8087/getPlainValue/node-red.0.Haus.TotalEnergie'
-    evu_ret_energie   ='http://iobroker01:8087/getPlainValue/node-red.0.EVU.EnergieReturned'
-    pv_power          ='http://iobroker01:8087/getPlainValue/node-red.0.PV.Power'
-    pv_energie        ='http://iobroker01:8087/getPlainValue/node-red.0.PV.TotalEnergie'
-    bwPumpe           ='http://iobroker01:8087/getPlainValue/node-red.0.Heizung.BrauchwasserPumpe'
-    ip_pcWohnzimmer = "192.168.188.35"
-    ip_Heitzung     = "192.168.188.36" # Heizung tempeaturen
-    ip_Brauchwasser = "192.168.188.37" # Heizung tempeaturen
-
-    heitzung    = shelly(ip_Heitzung)
-    bw_speicher = shelly(ip_Brauchwasser)
-    pc_wohnzimmer= shelly(ip_pcWohnzimmer)
-
-    evu = iobroker()
     
-    BW_Speicher_Heizung = 0
-    Aktueller_Eigenverbarauch = 0
-    PV_Leistung = 0
-
-    Aussen_temperatur      = heitzung.get_temperature( 0)
-    Kessel_temperatur      = heitzung.get_temperature( 1)
+    
+    ip_Heitzung = "192.168.188.36" # Heizung tempeaturen
+    heitzung    = shelly(ip_Heitzung)
+ 
     WarmwasserSpeicher_temperatur  = heitzung.get_temperature( 2)
+    Speicher_Lade_Leistung =0
+    
+    if (WarmwasserSpeicher_temperatur < 63.0):
+        set_BW_Heizleistung( 1000)
+    
+    elif (WarmwasserSpeicher_temperatur > 68.0):
+        set_BW_Heizleistung( 0 )
+    
+    Speicher_Lade_Leistung = get_BW_Heizleistung() 
+     
+     
+    BW_Speicher_soc = my_map( WarmwasserSpeicher_temperatur, 40, 68, 0, 100)
+    clearConsole()
+ 
+     
+    print('---------------------------------------------------------------------' )
+    print("| WW Power  : %4.0d W  " % (Speicher_Lade_Leistung))
+    print('---------------------------------------------------------------------' )
+    print("| WW SoC    :   %2.0d %%                | WW Temp     : %2.1f°C" % (BW_Speicher_soc, WarmwasserSpeicher_temperatur))
+    print('---------------------------------------------------------------------' )
     
 
 
@@ -530,44 +542,40 @@ def maximal_laden():
 def main( mySTATE):
     
     # Lade SystemHardware.json
-     
+    seconds_alt = time.time()
     
-    EVU_Zaehlerstand_2020 = 30248.0 # KWH 16 Juni 2020
-    EVU_Zaehlerstand_2021 = 32083.0 # KWH  1 Juni 2121
-    
+    #EVU_Zaehlerstand_2020 = 30248.0 # KWH 16 Juni 2020
+    #EVU_Zaehlerstand_2021 = 32083.0 # KWH  1 Juni 2121
+    os.environ['TERM'] = 'xterm'
+
     
     
     while True:
-        
-        
-        #mySTATE = 'SommerBetrieb'
- 
  
         # TODO
         # 1. Was ist Billiger? WW mit Heizung oder elektrisch
         #    - 1 KWh EVU-Bezug kosten 30 Cent == 30 Minuten Gas Kessel
         #    -  
         # 2. Hat WW-Speicher immer vorrang?
-        
-        
+
+        # WW-Speicher mit Strom aus PV-Überschuss und der rest mit EVU Bezug.
+        # Die Heizung soll nicht anspringen
         if mySTATE == 'SommerBetrieb':
-            # WW-Speicher mit Strom aus PV-Überschuss und der rest mit EVU Bezug.
-            # Die Heizung soll nicht anspringen
             SommerBetrieb()
+            time.sleep(5)
             pass
         
+        # WW-Speicher nur mit Strom aus PV-Überschuss.
+        # Wenn es nicht reicht geht die Heizung an.
         if mySTATE == 'SommerBetrieb_Überschuss':
-            # WW-Speicher nur mit Strom aus PV-Überschuss.
-            # Wenn es nicht reicht geht die Heizung an.
             ueberschuss_laden()
             pass
  
-        
+        # 3. Heizen mit Elektrisch.
         elif mySTATE == 'StromHeizen':
-            # 3. Heizen mit Elektrisch.
             pass
 
-#main( 'SommerBetrieb' )
-main( 'SommerBetrieb_Überschuss')
+main( 'SommerBetrieb' )
+#main( 'SommerBetrieb_Überschuss')
 
  
