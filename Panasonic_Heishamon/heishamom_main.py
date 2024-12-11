@@ -1,10 +1,19 @@
 import time
-
+from shelly import shelly
 import json
 import requests
 import os
 
 from datetime import datetime
+global shelly1_ip
+global shelly2_ip
+
+
+shelly1_ip = "192.168.188.36"
+shelly2_ip  ="192.168.188.177"
+
+
+
 
 def read_heishamon(IP):
     url = f"http://{IP}/"
@@ -124,6 +133,12 @@ def check_Main_Target_Temp(IP1, IP2):
     Main_Delta_Temp1 = 0
     Main_Delta_Temp2 = 0
     
+    shelly1= shelly(shelly1_ip)
+    shelly2= shelly(shelly2_ip)
+ 
+    
+    
+    
     
     data1, res = read_heishamon(IP1)
     if res==0:
@@ -194,8 +209,40 @@ def check_Main_Target_Temp(IP1, IP2):
     
     
     print("\nHeatpump_State         = "+" ("+  str(Heatpump_State1) + ", " + str(Heatpump_State2) + ") [1=on, 0=off]" )
+
+    if str(Heatpump_State1) == "0":
+        set_heishamon(IP1, "SetHeatpump", 1)
+
+    if str(Heatpump_State2) == "0":
+        set_heishamon(IP2, "SetHeatpump", 1)
+
+
     print("Defrosting_State       = "+" ("+  str(Defrosting_State1) + ", " + str(Defrosting_State2) + ") [1=on, 0=off]" )
-    print("Error                  = "+" ("+  str(Error1) + ", " + str(str(Error2)) + ") [Hxx]" )
+    print("Error                  = "+" ("+  str(Error1) + ", " + str(Error2) + ") [Hxx]" )
+    
+    if str(Error1) == "H62":
+        # Starte Shelly neu
+        print("shelly1 Aussschalten")
+        shelly1.set_relay(0)
+        print("Warte 10 Sekunden")
+        time.sleep(10)
+        print("shelly1 Einschalten")
+        shelly1.set_relay(1)
+        print("Warte 20 Sekunden")
+        time.sleep(20)
+        
+    if str(Error2) == "H62":
+        # Starte Shelly neu
+        print("shelly2 Aussschalten")
+        shelly2.set_relay(0)
+        print("Warte 10 Sekunden")
+        time.sleep(10)
+        print("shelly2 Einschalten")
+        shelly2.set_relay(1)
+        print("Warte 20 Sekunden")
+        time.sleep(20)
+    
+    
     
     
     print("Heating_Off_Out_Temp   = "+" ("+  str(Heating_Off_Outdoor_Temp1) + ", " + str(Heating_Off_Outdoor_Temp2) + ") [°C]" )
@@ -213,17 +260,51 @@ def check_Main_Target_Temp(IP1, IP2):
     print("Fan1_Motor_Speed       = " +" ("+  str(Fan1_Motor_Speed1) + ", " + str(Fan1_Motor_Speed2) + ") [r/min]" )
 
 
-    Heat_Power_Production = int(Heat_Power_Production1) + int(Heat_Power_Production2)
-    print("\nHeat_Power_Production  = ",  Heat_Power_Production, end='')
-    print(" ("+  str(Heat_Power_Production1) + ", " + str(Heat_Power_Production2) + ") [Watt]" )
+    #Heat_Power_Production = int(Heat_Power_Production1) + int(Heat_Power_Production2)
+    #print("\nHeat_Power_Production  = ",  Heat_Power_Production, end='')
+    #print(" ("+  str(Heat_Power_Production1) + ", " + str(Heat_Power_Production2) + ") [Watt]" )
+ 
+    Real_Power_Production1 = int(1.16* float(Pump_Flow1)*60.0* Main_Delta_Temp1)
+ 
+    Real_Power_Production2 = int(1.16* float(Pump_Flow2)*60.0* Main_Delta_Temp2)
+    Real_Power_Production = Real_Power_Production1 +Real_Power_Production2
+ 
+    print("\nReal_Power_Production  = ",  Real_Power_Production, end='')
+    print(" ("+  str(Real_Power_Production1) + ", " + str(Real_Power_Production2) + ") [Watt]" )
+ 
+ 
+ 
+    #Heat_Power_Consumption =int(Heat_Power_Consumption1) + int(Heat_Power_Consumption2)     
+    #print("\nHeat_Power_Consumption = ",  Heat_Power_Consumption, end='')
+    #print(" ("+  str(Heat_Power_Consumption1) + ", " + str(Heat_Power_Consumption2) + ") [Watt]" )
+
+
   
+    #print("sh1 = ", shelly1.get_power(0)) 
+    #print("sh2 = ", shelly2.get_power(0)) 
+  
+    Heat_Power_Consumption1 = shelly1.get_power(0)
+    Heat_Power_Consumption2 = shelly2.get_power(0)
     Heat_Power_Consumption =int(Heat_Power_Consumption1) + int(Heat_Power_Consumption2)     
  
-    print("Heat_Power_Consumption = ",  Heat_Power_Consumption, end='')
+    print("Real_Power_Consumption = ",  Heat_Power_Consumption, end='')
     print(" ("+  str(Heat_Power_Consumption1) + ", " + str(Heat_Power_Consumption2) + ") [Watt]" )
 
-    print("Operations_Hours       = "+" ("+  str(Operations_Hours1) + ", " + str(Operations_Hours2) + ") [h]" )
+
+    COP1 = float(Real_Power_Production1 / Heat_Power_Consumption1)
+    COP2 = float(Real_Power_Production2 / Heat_Power_Consumption2)
+
+    COP = (COP1 + COP2) /2.0
+    
+    print("COP                    =  %3.1f (%3.1f, %3.1f)" % ( COP, COP1, COP2))
+    #print(" ("+  str(COP1) + ", " + str(COP2) + ") [Watt]" )
+    
+
+    print("\nOperations_Hours       = "+" ("+  str(Operations_Hours1) + ", " + str(Operations_Hours2) + ") [h]" )
     print("Operations_Counter     = "+" ("+  str(Operations_Counter1) + ", " + str(Operations_Counter2) + ") [ ]" )
+
+
+
 
 
 '''
@@ -249,6 +330,8 @@ def main():
 
     IP1 ='192.168.188.173'
     IP2 ='192.168.188.25'
+    
+    
     #set_heishamon(IP2, "SetHeatpump", 1) 
     loop=0
     while True:
@@ -258,6 +341,10 @@ def main():
         #check_Heatpump( IP1, IP2)
         #check_Heatpump( IP2, IP1)
         check_Main_Target_Temp(IP1, IP2)
+        
+        
+        
+        
         for i in range(0, 10):
             time.sleep(1)
             print('.', end="")
