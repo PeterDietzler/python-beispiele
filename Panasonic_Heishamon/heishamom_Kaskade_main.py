@@ -273,11 +273,11 @@ class App:
   def __init__(self, master):
     frame = Frame(master)
     frame.pack()
-    root.geometry("1000x700")
+    #root.geometry("1000x700")
     r=0
     self.button1 = Button(frame, 
                          text="QUIT", fg="red", 
-                         command=root.destroy, relief=RIDGE,width=15).grid(row=0,column=0)
+                         command=root.destroy, relief=RIDGE,width=15).grid(row=0,column=0,padx='55', pady='20', sticky='ew')
     #self.button.pack(side=LEFT)
     
     self.slogan2 = Button(frame,
@@ -302,32 +302,32 @@ class App:
     #self.slogan.pack(side=LEFT)
     self.slogan5 = Button(frame,
                          text="Hello2",relief=RIDGE,width=15,
-                         command=self.write_slogan).grid(row=4,column=5)
+                         command=self.write_slogan).grid(row=5,column=5)
     #self.slogan.pack(side=LEFT)
     self.slogan5 = Button(frame,
                          text="Hello2",relief=RIDGE,width=15,
-                         command=self.write_slogan).grid(row=4,column=6)
+                         command=self.write_slogan).grid(row=6,column=6)
     #self.slogan.pack(side=LEFT)
-  
-    S = Scrollbar(root)
-    T = Text(root, height=4, width=100)
-    S.pack(side=RIGHT, fill=Y)
-    T.pack(side=LEFT, fill=Y)
-    S.config(command=T.yview)
-    T.config(yscrollcommand=S.set)
-    quote = """HAMLET: To be, or not to be--that is the question:
-    Whether 'tis nobler in the mind to suffer
-    The slings and arrows of outrageous fortune
-    Or to take arms against a sea of troubles
-    And by opposing end them. To die, to sleep--
-    No more--and by a sleep to say we end
-    The heartache, and the thousand natural shocks
-    That flesh is heir to. 'Tis a consummation
-    Devoutly to be wished."""
-    T.insert(END, quote)
+    '''  
+        S = Scrollbar(root)
+        T = Text(root, height=4, width=100)
+        S.pack(side=RIGHT, fill=Y)
+        T.pack(side=LEFT, fill=Y)
+        S.config(command=T.yview)
+        T.config(yscrollcommand=S.set)
+        quote = """HAMLET: To be, or not to be--that is the question:
+        Whether 'tis nobler in the mind to suffer
+        The slings and arrows of outrageous fortune
+        Or to take arms against a sea of troubles
+        And by opposing end them. To die, to sleep--
+        No more--and by a sleep to say we end
+        The heartache, and the thousand natural shocks
+        That flesh is heir to. 'Tis a consummation
+        Devoutly to be wished."""
+        T.insert(END, quote)
 
-    T.insert(END, "Just a text Widget\nin two lines\n")
-
+        T.insert(END, "Just a text Widget\nin two lines\n")
+    '''
   def write_slogan(self):
     print("Tkinter is easy to use!")
 
@@ -367,11 +367,38 @@ if __name__ == "__main__":
     mainloop()
     '''
 
+
+
+class Table:
+     
+  def __init__(self,root):
+         
+    # code for creating table
+    for i in range(total_rows):
+      for j in range(total_columns):
+        self.e = Entry(root, width=20, fg='blue', font=('Arial',16,'bold'))
+        self.e.grid(row=i, column=j)
+        self.e.insert(END, lst[i][j])
+
+
 hm1= heishamon(IP1)
 hm2= heishamon(IP2)
 
-
+# take the data
+lst = [(1,'Raj','Mumbai',19),
+       (2,'Aaryan','Pune',18),
+       (3,'Vaishnavi','Mumbai',20),
+       (4,'Rachna','Mumbai',21),
+       (5,'Shubham','Delhi',21)]
+  
+# find total number of rows and
+# columns in list
+total_rows = len(lst)
+total_columns = len(lst[0])
+  
+# create root window
 root = Tk()
+#t = Table(root)
 app = App(root)
 root.mainloop()
 
