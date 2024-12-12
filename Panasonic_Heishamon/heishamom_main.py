@@ -210,11 +210,6 @@ def check_Main_Target_Temp(IP1, IP2):
     
     print("\nHeatpump_State         = "+" ("+  str(Heatpump_State1) + ", " + str(Heatpump_State2) + ") [1=on, 0=off]" )
 
-    if str(Heatpump_State1) == "0":
-        set_heishamon(IP1, "SetHeatpump", 1)
-
-    if str(Heatpump_State2) == "0":
-        set_heishamon(IP2, "SetHeatpump", 1)
 
 
     print("Defrosting_State       = "+" ("+  str(Defrosting_State1) + ", " + str(Defrosting_State2) + ") [1=on, 0=off]" )
@@ -241,7 +236,16 @@ def check_Main_Target_Temp(IP1, IP2):
         shelly2.set_relay(1)
         print("Warte 20 Sekunden")
         time.sleep(20)
-    
+
+
+    if str(Error1) == "No error" and str(Error1) == "No error":
+        if str(Heatpump_State1) == "0":
+            set_heishamon(IP1, "SetHeatpump", 1)
+
+        if str(Heatpump_State2) == "0":
+            set_heishamon(IP2, "SetHeatpump", 1)
+        
+    #if str(Error1) == "No error" and str(Error1) == "No error":
     
     
     
