@@ -3,6 +3,7 @@ from shelly import shelly
 import json
 import requests
 import os
+import math
 
 from datetime import datetime
 global shelly1_ip
@@ -121,7 +122,7 @@ def check_Heatpump( IP1, IP2):
 
 
 
-def check_Main_Target_Temp(IP1, IP2):
+def check_Main_Target_Temp(Restart, IP1, IP2):
     #print ("check_Main_Target_Temp()")
     data1=0
     data2=0
@@ -140,8 +141,8 @@ def check_Main_Target_Temp(IP1, IP2):
     
     
     
-    data1, res = read_heishamon(IP1)
-    if res==0:
+    data1, res1 = read_heishamon(IP1)
+    if res1==0:
         Heatpump_State1         = data1["heatpump"][0]["Value"]
         Pump_Flow1              = data1["heatpump"][1]["Value"]
         Main_Inlet_Temp1        = data1["heatpump"][5]["Value"]
@@ -166,8 +167,8 @@ def check_Main_Target_Temp(IP1, IP2):
         Heating_Off_Outdoor_Temp1 = data1["heatpump"][77]["Value"]
   
   
-    data2, res = read_heishamon(IP2)
-    if res==0:
+    data2, res2 = read_heishamon(IP2)
+    if res2==0:
         Heatpump_State2         = data2["heatpump"][0]["Value"]
         Pump_Flow2              = data2["heatpump"][1]["Value"]
         Main_Inlet_Temp2        = data2["heatpump"][5]["Value"]
@@ -192,120 +193,128 @@ def check_Main_Target_Temp(IP1, IP2):
         Pump_Speed2             = data2["heatpump"][65]["Value"]
         Heating_Off_Outdoor_Temp2 = data2["heatpump"][77]["Value"]
         
+    if res1==0 and res2==0:
 
+        print("\n" + str(datetime.now()))
 
-    print("\n" + str(datetime.now()))
-
-    print("Outside_Temp           = "+" ("+  str(Outside_Temp1) + ", " + str(Outside_Temp2) + ") [°C]" )
-    print("Z1_Heat_Request_Temp   = "+" ("+  str(Z1_Heat_Request_Temp1) + ", " + str(Z1_Heat_Request_Temp2) + ") [°C]" )
-    print("Main_Target_Temp       = "+" ("+  str(Main_Target_Temp1) + ", " + str(Main_Target_Temp2) + ") [°C]" )
-    print("Main_Outlet_Temp       = "+" ("+  str(Main_Outlet_Temp1) + ", " + str(Main_Outlet_Temp2) + ") [°C]" )
-    print("Main_Inlet_Temp        = "+" ("+  str(Main_Inlet_Temp1)  + ", " + str(Main_Inlet_Temp2)  + ") [°C]" )
-    
-    Main_Delta_Temp1 = float(Main_Outlet_Temp1) - float(Main_Inlet_Temp1)
-    Main_Delta_Temp2 = float(Main_Outlet_Temp2) - float(Main_Inlet_Temp2)
-    
-    print("Main_Delta_Temp        = "+" ("+  str(Main_Delta_Temp1)  + ", " + str(Main_Delta_Temp2)  + ") [°C]" )
-    
-    
-    print("\nHeatpump_State         = "+" ("+  str(Heatpump_State1) + ", " + str(Heatpump_State2) + ") [1=on, 0=off]" )
-
-
-
-    print("Defrosting_State       = "+" ("+  str(Defrosting_State1) + ", " + str(Defrosting_State2) + ") [1=on, 0=off]" )
-    print("Error                  = "+" ("+  str(Error1) + ", " + str(Error2) + ") [Hxx]" )
-    
-    if str(Error1) == "H62":
-        # Starte Shelly neu
-        print("shelly1 Aussschalten")
-        shelly1.set_relay(0)
-        print("Warte 10 Sekunden")
-        time.sleep(10)
-        print("shelly1 Einschalten")
-        shelly1.set_relay(1)
-        print("Warte 20 Sekunden")
-        time.sleep(20)
+        print("Outside_Temp           = "+" ("+  str(Outside_Temp1) + ", " + str(Outside_Temp2) + ") [°C]" )
+        print("Z1_Heat_Request_Temp   = "+" ("+  str(Z1_Heat_Request_Temp1) + ", " + str(Z1_Heat_Request_Temp2) + ") [°C]" )
+        print("Main_Target_Temp       = "+" ("+  str(Main_Target_Temp1) + ", " + str(Main_Target_Temp2) + ") [°C]" )
+        print("Main_Outlet_Temp       = "+" ("+  str(Main_Outlet_Temp1) + ", " + str(Main_Outlet_Temp2) + ") [°C]" )
+        print("Main_Inlet_Temp        = "+" ("+  str(Main_Inlet_Temp1)  + ", " + str(Main_Inlet_Temp2)  + ") [°C]" )
         
-    if str(Error2) == "H62":
-        # Starte Shelly neu
-        print("shelly2 Aussschalten")
-        shelly2.set_relay(0)
-        print("Warte 10 Sekunden")
-        time.sleep(10)
-        print("shelly2 Einschalten")
-        shelly2.set_relay(1)
-        print("Warte 20 Sekunden")
-        time.sleep(20)
-
-
-    if str(Error1) == "No error" and str(Error1) == "No error":
-        if str(Heatpump_State1) == "0":
-            set_heishamon(IP1, "SetHeatpump", 1)
-
-        if str(Heatpump_State2) == "0":
-            set_heishamon(IP2, "SetHeatpump", 1)
+        Main_Delta_Temp1 = float(Main_Outlet_Temp1) - float(Main_Inlet_Temp1)
+        Main_Delta_Temp2 = float(Main_Outlet_Temp2) - float(Main_Inlet_Temp2)
         
-    #if str(Error1) == "No error" and str(Error1) == "No error":
-    
-    
-    
-    print("Heating_Off_Out_Temp   = "+" ("+  str(Heating_Off_Outdoor_Temp1) + ", " + str(Heating_Off_Outdoor_Temp2) + ") [°C]" )
-
-    print("\nCompressor_Freq        = "+" ("+  str(Compressor_Freq1) + ", " + str(Compressor_Freq2) + ") [Hz]" )
-    print("Outside_Pipe_Temp      = "+" ("+  str(Outside_Pipe_Temp1) + ", " + str(Outside_Pipe_Temp2) + ") [°C]" )
-
-    print("Main_Hex_Outlet_Temp   = "+" ("+  str(Main_Hex_Outlet_Temp1) + ", " + str(Main_Hex_Outlet_Temp2) + ") [°C]" )
-    print("Inside_Pipe_Temp       = "+" ("+  str(Inside_Pipe_Temp1) + ", " + str(Inside_Pipe_Temp2) + ") [°C]" )
+        print("Main_Delta_Temp        = "+" ("+  str(Main_Delta_Temp1)  + ", " + str(Main_Delta_Temp2)  + ") [°C]" )
+        
+        
+        print("\nHeatpump_State         = "+" ("+  str(Heatpump_State1) + ", " + str(Heatpump_State2) + ") [1=on, 0=off]" )
 
 
-    print("High_Pressure          = "+" ("+  str(High_Pressure1) + ", " + str(High_Pressure2) + ") [Kgf/cm2 ~ Bar]" )
-    print("Pump_Flow              = " +" ("+  str(Pump_Flow1) + ", " + str(Pump_Flow2) + ") [l/min]" )
-    print("Pump_Speed             = "+" ("+  str(Pump_Speed1) + ", " + str(Pump_Speed2) + ") [r/min]" )
-    print("Fan1_Motor_Speed       = " +" ("+  str(Fan1_Motor_Speed1) + ", " + str(Fan1_Motor_Speed2) + ") [r/min]" )
+
+        print("Defrosting_State       = "+" ("+  str(Defrosting_State1) + ", " + str(Defrosting_State2) + ") [1=on, 0=off]" )
+        print("Error                  = "+" ("+  str(Error1) + ", " + str(Error2) + ") [Hxx]" )
+        
+        if Restart ==1:
+            if str(Error1) == "H62":
+                # Starte Shelly neu
+                print("shelly1 Aussschalten")
+                shelly1.set_relay(0)
+                print("Warte 10 Sekunden")
+                time.sleep(10)
+                print("shelly1 Einschalten")
+                shelly1.set_relay(1)
+                print("Warte 40 Sekunden")
+                time.sleep(40)
+                
+            if str(Error2) == "H62":
+                # Starte Shelly neu
+                print("shelly2 Aussschalten")
+                shelly2.set_relay(0)
+                print("Warte 10 Sekunden")
+                time.sleep(10)
+                print("shelly2 Einschalten")
+                shelly2.set_relay(1)
+                print("Warte 40 Sekunden")
+                time.sleep(40)
 
 
-    #Heat_Power_Production = int(Heat_Power_Production1) + int(Heat_Power_Production2)
-    #print("\nHeat_Power_Production  = ",  Heat_Power_Production, end='')
-    #print(" ("+  str(Heat_Power_Production1) + ", " + str(Heat_Power_Production2) + ") [Watt]" )
- 
-    Real_Power_Production1 = int(1.16* float(Pump_Flow1)*60.0* Main_Delta_Temp1)
- 
-    Real_Power_Production2 = int(1.16* float(Pump_Flow2)*60.0* Main_Delta_Temp2)
-    Real_Power_Production = Real_Power_Production1 +Real_Power_Production2
- 
-    print("\nReal_Power_Production  = ",  Real_Power_Production, end='')
-    print(" ("+  str(Real_Power_Production1) + ", " + str(Real_Power_Production2) + ") [Watt]" )
- 
- 
- 
-    #Heat_Power_Consumption =int(Heat_Power_Consumption1) + int(Heat_Power_Consumption2)     
-    #print("\nHeat_Power_Consumption = ",  Heat_Power_Consumption, end='')
-    #print(" ("+  str(Heat_Power_Consumption1) + ", " + str(Heat_Power_Consumption2) + ") [Watt]" )
+            if str(Error1) == "No error" and str(Error1) == "No error":
+                if str(Heatpump_State1) == "0":
+                    set_heishamon(IP1, "SetHeatpump", 1)
+                    print("Warte 40 Sekunden")
+                    time.sleep(40)
+
+                if str(Heatpump_State2) == "0":
+                    set_heishamon(IP2, "SetHeatpump", 1)
+                    print("Warte 40 Sekunden")
+                    time.sleep(40)
+            
+        #if str(Error1) == "No error" and str(Error1) == "No error":
+        
+        
+        
+        print("Heating_Off_Out_Temp   = "+" ("+  str(Heating_Off_Outdoor_Temp1) + ", " + str(Heating_Off_Outdoor_Temp2) + ") [°C]" )
+
+        print("\nCompressor_Freq        = "+" ("+  str(Compressor_Freq1) + ", " + str(Compressor_Freq2) + ") [Hz]" )
+        print("Outside_Pipe_Temp      = "+" ("+  str(Outside_Pipe_Temp1) + ", " + str(Outside_Pipe_Temp2) + ") [°C]" )
+
+        print("Main_Hex_Outlet_Temp   = "+" ("+  str(Main_Hex_Outlet_Temp1) + ", " + str(Main_Hex_Outlet_Temp2) + ") [°C]" )
+        print("Inside_Pipe_Temp       = "+" ("+  str(Inside_Pipe_Temp1) + ", " + str(Inside_Pipe_Temp2) + ") [°C]" )
 
 
-  
-    #print("sh1 = ", shelly1.get_power(0)) 
-    #print("sh2 = ", shelly2.get_power(0)) 
-  
-    Heat_Power_Consumption1 = shelly1.get_power(0)
-    Heat_Power_Consumption2 = shelly2.get_power(0)
-    Heat_Power_Consumption =int(Heat_Power_Consumption1) + int(Heat_Power_Consumption2)     
- 
-    print("Real_Power_Consumption = ",  Heat_Power_Consumption, end='')
-    print(" ("+  str(Heat_Power_Consumption1) + ", " + str(Heat_Power_Consumption2) + ") [Watt]" )
+        print("High_Pressure          = "+" ("+  str(High_Pressure1) + ", " + str(High_Pressure2) + ") [Kgf/cm2 ~ Bar]" )
+        print("Pump_Flow              = " +" ("+  str(Pump_Flow1) + ", " + str(Pump_Flow2) + ") [l/min]" )
+        print("Pump_Speed             = "+" ("+  str(Pump_Speed1) + ", " + str(Pump_Speed2) + ") [r/min]" )
+        print("Fan1_Motor_Speed       = " +" ("+  str(Fan1_Motor_Speed1) + ", " + str(Fan1_Motor_Speed2) + ") [r/min]" )
 
 
-    COP1 = float(Real_Power_Production1 / Heat_Power_Consumption1)
-    COP2 = float(Real_Power_Production2 / Heat_Power_Consumption2)
+        #Heat_Power_Production = int(Heat_Power_Production1) + int(Heat_Power_Production2)
+        #print("\nHeat_Power_Production  = ",  Heat_Power_Production, end='')
+        #print(" ("+  str(Heat_Power_Production1) + ", " + str(Heat_Power_Production2) + ") [Watt]" )
+     
+        Real_Power_Production1 = int(1.16* float(Pump_Flow1)*60.0* Main_Delta_Temp1)
+     
+        Real_Power_Production2 = int(1.16* float(Pump_Flow2)*60.0* Main_Delta_Temp2)
+        Real_Power_Production = Real_Power_Production1 +Real_Power_Production2
+     
+        print("\nReal_Power_Production  = ",  Real_Power_Production, end='')
+        print(" ("+  str(Real_Power_Production1) + ", " + str(Real_Power_Production2) + ") [Watt]" )
+     
+     
+        #Heat_Power_Consumption =int(Heat_Power_Consumption1) + int(Heat_Power_Consumption2)     
+        #print("\nHeat_Power_Consumption = ",  Heat_Power_Consumption, end='')
+        #print(" ("+  str(Heat_Power_Consumption1) + ", " + str(Heat_Power_Consumption2) + ") [Watt]" )
 
-    COP = (COP1 + COP2) /2.0
-    
-    print("COP                    =  %3.1f (%3.1f, %3.1f)" % ( COP, COP1, COP2))
-    #print(" ("+  str(COP1) + ", " + str(COP2) + ") [Watt]" )
-    
 
-    print("\nOperations_Hours       = "+" ("+  str(Operations_Hours1) + ", " + str(Operations_Hours2) + ") [h]" )
-    print("Operations_Counter     = "+" ("+  str(Operations_Counter1) + ", " + str(Operations_Counter2) + ") [ ]" )
+      
+        #print("sh1 = ", shelly1.get_power(0)) 
+        #print("sh2 = ", shelly2.get_power(0)) 
+      
+        Heat_Power_Consumption1 = shelly1.get_power(0)
+        Heat_Power_Consumption2 = shelly2.get_power(0)
+        Heat_Power_Consumption =int(Heat_Power_Consumption1) + int(Heat_Power_Consumption2)     
+     
+        print("Real_Power_Consumption = ",  Heat_Power_Consumption, end='')
+        print(" ("+  str(Heat_Power_Consumption1) + ", " + str(Heat_Power_Consumption2) + ") [Watt]" )
+
+        if math.fabs(Heat_Power_Consumption1) >= 0.00001: 
+            COP1 = float(Real_Power_Production1 / Heat_Power_Consumption1)
+
+        if math.fabs(Heat_Power_Consumption2) >= 0.00001: 
+            COP2 = float(Real_Power_Production2 / Heat_Power_Consumption2)
+        
+        COP = (COP1 + COP2) /2.0
+        
+        print("COP                    =  %3.1f (%3.1f, %3.1f)" % ( COP, COP1, COP2))
+        #print(" ("+  str(COP1) + ", " + str(COP2) + ") [Watt]" )
+        
+
+        print("\nOperations_Hours       = "+" ("+  str(Operations_Hours1) + ", " + str(Operations_Hours2) + ") [h]" )
+        print("Operations_Counter     = "+" ("+  str(Operations_Counter1) + ", " + str(Operations_Counter2) + ") [ ]" )
+    else:
+        print("keine gültigen Daten :-]") 
 
 
 
@@ -344,7 +353,8 @@ def main():
 
         #check_Heatpump( IP1, IP2)
         #check_Heatpump( IP2, IP1)
-        check_Main_Target_Temp(IP1, IP2)
+        restart_wp = 1
+        check_Main_Target_Temp( restart_wp, IP1, IP2)
         
         
         
