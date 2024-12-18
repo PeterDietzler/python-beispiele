@@ -1,14 +1,3 @@
-Keine ausgewählt 
-
-Direkt zum Inhalt
-Gmail mit Screenreadern verwenden
-in:sent 
-Konversationen
-47,84 GB von 100 GB belegt
-Abo kündigen
-Nutzungsbedingungen · Datenschutz · Programmrichtlinien
-Letzte Kontoaktivität vor 1 Stunde
-Details
 import time
 from shelly import shelly
 import json
@@ -26,6 +15,8 @@ shelly2_ip  ="192.168.188.177"
 
 shelly_hk_ip  ="192.168.188.34"
 
+Error1_Reset_done = 0
+Error2_Reset_done = 0                
 
 
 def read_heishamon(IP):
@@ -149,7 +140,9 @@ def check_Main_Target_Temp(Restart, IP1, IP2):
     shelly1= shelly(shelly1_ip)
     shelly2= shelly(shelly2_ip)
     shelly_hk = shelly( shelly_hk_ip)
-    
+    global Error1_Reset_done
+    global Error2_Reset_done
+
     
     
     
@@ -166,18 +159,20 @@ def check_Main_Target_Temp(Restart, IP1, IP2):
         Outside_Temp1           = data1["heatpump"][14]["Value"]
         Heat_Power_Production1  = data1["heatpump"][15]["Value"]
         Heat_Power_Consumption1 = data1["heatpump"][16]["Value"]
+        Powerful_Mode_Time1     = data1["heatpump"][17]["Value"]
+
         Outside_Pipe_Temp1      = data1["heatpump"][21]["Value"]
         Defrosting_State1       = data1["heatpump"][26]["Value"]
         Z1_Heat_Request_Temp1   = data1["heatpump"][27]["Value"]
         Error1                  = data1["heatpump"][44]["Value"]
         Main_Hex_Outlet_Temp1   = data1["heatpump"][49]["Value"]
         Inside_Pipe_Temp1       = data1["heatpump"][51]["Value"]
-
         Fan1_Motor_Speed1       = data1["heatpump"][62]["Value"]
         High_Pressure1          = data1["heatpump"][64]["Value"]
         Pump_Speed1             = data1["heatpump"][65]["Value"]
         Heating_Off_Outdoor_Temp1 = data1["heatpump"][77]["Value"]
-  
+        # TOP17	main/Powerful_Mode_Time	Powerful state in minutes (0, 1, 2 or 3 x 30min)
+        # SET4	SetPowerfulMode	Set powerful mode run time in minutes	0=off, 1=30, 2=60 or 3=90
   
     data2, res2 = read_heishamon(IP2)
     if res2==0:
@@ -192,14 +187,14 @@ def check_Main_Target_Temp(Restart, IP1, IP2):
         Outside_Temp2           = data2["heatpump"][14]["Value"]
         Heat_Power_Production2  = data2["heatpump"][15]["Value"]
         Heat_Power_Consumption2 = data2["heatpump"][16]["Value"]
+        Powerful_Mode_Time2     = data2["heatpump"][17]["Value"]
+        
         Outside_Pipe_Temp2      = data2["heatpump"][21]["Value"]
         Defrosting_State2       = data2["heatpump"][26]["Value"]
         Z1_Heat_Request_Temp2   = data2["heatpump"][27]["Value"] 
         Error2                  = data2["heatpump"][44]["Value"]
-
         Main_Hex_Outlet_Temp2   = data2["heatpump"][49]["Value"]
         Inside_Pipe_Temp2       = data2["heatpump"][51]["Value"]
-
         Fan1_Motor_Speed2       = data2["heatpump"][62]["Value"]
         High_Pressure2          = data2["heatpump"][64]["Value"]
         Pump_Speed2             = data2["heatpump"][65]["Value"]
@@ -208,21 +203,25 @@ def check_Main_Target_Temp(Restart, IP1, IP2):
     if res1==0 and res2==0:
 
         print("\n" + str(datetime.now()))
-        print_str("Heischamon", "188.173", "188.25", "IP", "" )
+        print_str("Heischamon 192.168.188.", "173", "25", "IP", "" )
         print_str("Outside_Temp",         Outside_Temp1, Outside_Temp2, "°C", "" )
         print_str("Z1_Heat_Request_Temp", Z1_Heat_Request_Temp1, Z1_Heat_Request_Temp2, "°C", "" )
         
         print_str("Main_Target_Temp",     Main_Target_Temp1, Main_Target_Temp2, "°C", "" )
         hk_vorlauf = shelly_hk.get_temperature(0)
-        hk_rücklauf = shelly_hk.get_temperature(1)
+        hk_rücklauf = shelly_hk.get_temperature(2)
         
-        print_str("Main_Outlet_Temp",     Main_Outlet_Temp1, Main_Outlet_Temp2, "°C", "HK_vl = {:3.1f}".format(hk_vorlauf) )
-        print_str("Main_Inlet_Temp",      Main_Inlet_Temp1, Main_Inlet_Temp2, "°C", "Hk_rl = {:3.1f}".format(hk_rücklauf) )
+        print_str("Main_Outlet_Temp", "{:3.1f}".format( float(Main_Outlet_Temp1)) ,"{:3.1f}".format( float(Main_Outlet_Temp2)),
+                  "°C", "HK_vl = {:3.1f}".format(hk_vorlauf) )
+        print_str("Main_Inlet_Temp",  "{:3.1f}".format( float(Main_Inlet_Temp1)) , "{:3.1f}".format( float(Main_Inlet_Temp2)),
+                  "°C", "Hk_rl = {:3.1f}".format(hk_rücklauf) )
 
         Main_Delta_Temp1 = float(Main_Outlet_Temp1) - float(Main_Inlet_Temp1)
         Main_Delta_Temp2 = float(Main_Outlet_Temp2) - float(Main_Inlet_Temp2)
-        print_str("Main_Delta_Temp", "{:3.1f}".format(Main_Delta_Temp1), "{:3.1f}".format(Main_Delta_Temp2), "°C", "Outlet-Inlet" )
+        print_str("Main_Delta_Temp", "{:3.1f}".format(Main_Delta_Temp1), "{:3.1f}".format(Main_Delta_Temp2), "°C", "Out-In = {:3.1f}".format(hk_vorlauf- hk_rücklauf) )
 
+     
+  
         Target_Delta_Temp1 = float(Main_Target_Temp1) - float(Main_Inlet_Temp1)
         Target_Delta_Temp2 = float(Main_Target_Temp2) - float(Main_Inlet_Temp2)
         print_str("Target_Delta_Temp", "{:3.1f}".format(Target_Delta_Temp1), "{:3.1f}".format(Target_Delta_Temp2), "°C", "Target-Inlet" )
@@ -230,6 +229,11 @@ def check_Main_Target_Temp(Restart, IP1, IP2):
         print("")
         print_str("Heatpump_State",      Heatpump_State1, Heatpump_State2, "State", "1=on, 0=off" )
         print_str("Defrosting_State",      Defrosting_State1, Defrosting_State2, "State", "1=on, 0=off" )
+        
+        print_str("Powerful_Mode_Time",  Powerful_Mode_Time1, Powerful_Mode_Time2, "State", "0,1,2 or 3 x 30min" )
+        
+        print_str("Heating_Off_Out_Temp",      Heating_Off_Outdoor_Temp1, Heating_Off_Outdoor_Temp2, "°C", "" )
+       
         print_str("Error",      Error1, Error2, "", "" )
 
         Error1_Reset_done = 0
@@ -274,19 +278,19 @@ def check_Main_Target_Temp(Restart, IP1, IP2):
                     print("Warte 40 Sekunden")
                     time.sleep(40)
                 
-        
-        
         print_str("Heating_Off_Out_Temp",      Heating_Off_Outdoor_Temp1, Heating_Off_Outdoor_Temp2, "°C", "" )
-
+     
+        
+        print_str("","","","","")
         print_str("Compressor_Freq",           Compressor_Freq1, Compressor_Freq2, "Hz", "" )
         print_str("Outside_Pipe_Temp",         Outside_Pipe_Temp1, Outside_Pipe_Temp2, "°C", "" )
-        #print_str("Main_Hex_Outlet_Temp",      Main_Hex_Outlet_Temp1, Main_Hex_Outlet_Temp2, "°C", "" )
-        #print_str("Inside_Pipe_Temp",          Inside_Pipe_Temp1, Inside_Pipe_Temp2, "°C", "" )
+        print_str("Main_Hex_Outlet_Temp",      Main_Hex_Outlet_Temp1, Main_Hex_Outlet_Temp2, "°C", "" )
+        print_str("Inside_Pipe_Temp",          Inside_Pipe_Temp1, Inside_Pipe_Temp2, "°C", "" )
 
         print_str("High_Pressure",             High_Pressure1, High_Pressure2, "~ Bar", "Kgf/cm2 " )
         print_str("Pump_Flow",                 Pump_Flow1, Pump_Flow2, "l/min", "" )
-        #print_str("Pump_Speed",                Pump_Speed1, Pump_Speed2, "r/min", "" )
-        #print_str("Fan1_Motor_Speed",          Fan1_Motor_Speed1, Fan1_Motor_Speed2, "r/min", "" )
+        print_str("Pump_Speed",                Pump_Speed1, Pump_Speed2, "r/min", "" )
+        print_str("Fan1_Motor_Speed",          Fan1_Motor_Speed1, Fan1_Motor_Speed2, "r/min", "" )
      
         Real_Power_Production1 = int(1.16* float(Pump_Flow1)*60.0* Main_Delta_Temp1)
      
@@ -317,12 +321,12 @@ def check_Main_Target_Temp(Restart, IP1, IP2):
         
         print_str("COP", "{:3.1f}".format(COP1)  , "{:3.1f}".format(COP2), "Out/In", "{:3.1f}".format(COP) )
 
-
-
-        print("Temp/COP@35°C (7°C/5.08) (2°C/3.57) (-7°C/2.78)")
-        print("Temp/COP@55°C (7°C/3.10) (2°C/2.27) (-7°C/1.85)")
-        #print_str("Operations_Hours", Operations_Hours1, Operations_Hours2, "h", 0 )
-        #print_str("Operations_Counter", Operations_Counter1, Operations_Counter2, "count", 0 )
+        print("")
+        print_str("Temp/COP@35°C", "7°/5.1", "2°/3.6", "-7°/2.8", "")
+        print_str("Temp/COP@45°C", "7°/4.1", "2°/2.9", "-7°/2.4", "")
+        print_str("Temp/COP@55°C", "7°/3.1", "2°/2.3", "-7°/1.9", "")
+        print_str("Operations_Hours", Operations_Hours1, Operations_Hours2, "h", 0 )
+        print_str("Operations_Counter", Operations_Counter1, Operations_Counter2, "count", 0 )
 
     else:
         print("keine gültigen Daten :-]") 
@@ -344,14 +348,9 @@ def check_Main_Target_Temp(Restart, IP1, IP2):
 
 
 
-#def print_int(name, wp1, wp2, unit, wp12 ):
-#        print("%-20.20s = %6.0d | %6.0d | %6.6s | %6.1d |" % ( name, wp1, wp2, unit, wp12))
-
-#def print_float(name, wp1, wp2, unit, wp12 ):
-#        print("%-20.20s = %6.1f | %6.1f | %6.6s | %6.1f |" % ( name, wp1, wp2, unit, wp12))
 
 def print_str(name, wp1, wp2, unit, wp12 ):
-        print("%-25s = %8s | %8s | %6s | %15s |" % ( name, wp1, wp2, unit, wp12))
+        print("%-25s = %8s | %8s | %8s | %15s |" % ( name, wp1, wp2, unit, wp12))
 
 
 
@@ -388,6 +387,3 @@ if __name__ == "__main__":
 # http://192.168.188.173/command?SetHeatpump=1
 
     
-    
-heishamom_main.py
-heishamom_main.py wird angezeigt.
